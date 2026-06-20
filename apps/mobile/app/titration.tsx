@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { ProGate } from '@/components/ProGate';
 import { trackEvent } from '@/lib/analytics';
 import {
   addStep as addStepApi,
@@ -30,8 +31,9 @@ const currentRungOrder = (steps: TitrationStepRecord[]): number | null => {
 
 // Titration ladder — the namesake feature. Visualise the dose-escalation plan,
 // see the current rung, add steps, and mark a step as started once a provider
-// OKs it. Persists via /api/titration → @titrra/db.
-const TitrationLadder = () => {
+// OKs it. Persists via /api/titration → @titrra/db. Gated behind Titrra Pro
+// (the marquee paid feature — see the wrapping default export).
+const TitrationLadderContent = () => {
   const insets = useSafeAreaInsets();
   const [steps, setSteps] = useState<TitrationStepRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -289,5 +291,19 @@ const TitrationLadder = () => {
     </ScrollView>
   );
 };
+
+// Pro-gated: non-subscribers see the upsell, subscribers see the ladder.
+const TitrationLadder = () => (
+  <ProGate
+    feature="The titration ladder"
+    perks={[
+      'Visualise your full dose-escalation plan',
+      'Step-up reminders timed to your schedule',
+      'See exactly where you are on your journey',
+    ]}
+  >
+    <TitrationLadderContent />
+  </ProGate>
+);
 
 export default TitrationLadder;

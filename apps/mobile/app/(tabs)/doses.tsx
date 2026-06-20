@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { Pressable, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 
 // Doses / History — the dose log timeline. Pro layers the medication-level
@@ -21,9 +22,12 @@ const Doses = () => {
         className="flex-row items-center justify-between rounded-2xl border border-border bg-sand p-4 active:bg-mist"
       >
         <View className="flex-1">
-          <Text className="font-sans-semibold text-[15px] text-ink">
-            Titration ladder
-          </Text>
+          <View className="flex-row items-center gap-2">
+            <Text className="font-sans-semibold text-[15px] text-ink">
+              Titration ladder
+            </Text>
+            <ProBadge />
+          </View>
           <Text className="mt-0.5 font-sans text-[13px] text-muted">
             Your dose-escalation plan and where you are on it.
           </Text>

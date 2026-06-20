@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
+import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { trackEvent } from '@/lib/analytics';
 import { type DoseRecord, listDoses, logDose as logDoseApi } from '@/lib/api';
@@ -141,9 +142,12 @@ const Today = () => {
             className="mt-3 flex-row items-center justify-between rounded-2xl border border-border bg-sand p-4 active:bg-mist"
           >
             <View className="flex-1">
-              <Text className="font-sans-semibold text-[15px] text-ink">
-                Titration ladder
-              </Text>
+              <View className="flex-row items-center gap-2">
+                <Text className="font-sans-semibold text-[15px] text-ink">
+                  Titration ladder
+                </Text>
+                <ProBadge />
+              </View>
               <Text className="mt-0.5 font-sans text-[13px] text-muted">
                 See where you are on your dose-escalation plan.
               </Text>

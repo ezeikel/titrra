@@ -43,6 +43,16 @@ const RootLayout = () => {
       >
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
+          name="titration"
+          options={{
+            headerShown: true,
+            title: 'Titration ladder',
+            headerBackTitle: 'Back',
+            headerTintColor: '#0f766e',
+            headerStyle: { backgroundColor: '#faf8f3' },
+          }}
+        />
+        <Stack.Screen
           name="paywall"
           options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
         />

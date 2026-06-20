@@ -1,14 +1,15 @@
 import { getDb, type InjectionSite, isDatabaseConfigured } from '@titrra/db';
 import { NextResponse } from 'next/server';
+import {
+  DEVICE_HEADER,
+  getDeviceId,
+  resolveUserAndMedication,
+} from '@/app/api/_lib/device-user';
 
 // Doses API — the first persistence path for the mobile Today screen.
 // Mobile (RN) can't import Prisma directly, so it POSTs/GETs here and this
-// route talks to @titrra/db → Neon. Auth is anonymous-first for v1: the client
-// sends a stable device id in `x-titrra-device`, which we map to a User. This
-// is the minimal version of chunky-crayon's mobile device-register flow; TODO
-// harden into proper sessions before launch.
-
-const DEVICE_HEADER = 'x-titrra-device';
+// route talks to @titrra/db → Neon. Device→user resolution is shared with the
+// other mobile routes via app/api/_lib/device-user.ts.
 
 const VALID_SITES = new Set<InjectionSite>([
   'ABDOMEN_L',
@@ -18,46 +19,6 @@ const VALID_SITES = new Set<InjectionSite>([
   'ARM_L',
   'ARM_R',
 ]);
-
-// Resolve (or lazily create) the anonymous user + their default medication for
-// a device. Keyed off the device id so a user keeps their history with no login.
-const resolveUserAndMedication = async (deviceId: string) => {
-  const db = getDb();
-  // The device id is stable per install; we store it in the (otherwise unused)
-  // email slot prefixed so it can't collide with a real email later.
-  const deviceEmail = `device:${deviceId}`;
-
-  const user = await db.user.upsert({
-    where: { email: deviceEmail },
-    update: {},
-    create: { email: deviceEmail },
-  });
-
-  let medication = await db.medication.findFirst({
-    where: { userId: user.id, active: true },
-    orderBy: { createdAt: 'asc' },
-  });
-
-  // No medication set up yet → create a sensible default the user can edit
-  // later in onboarding (a weekly GLP-1 injection).
-  if (!medication) {
-    medication = await db.medication.create({
-      data: {
-        userId: user.id,
-        drug: 'OTHER',
-        form: 'INJECTION',
-        scheduleType: 'WEEKLY',
-      },
-    });
-  }
-
-  return { user, medication };
-};
-
-const getDeviceId = (req: Request): string | null => {
-  const id = req.headers.get(DEVICE_HEADER)?.trim();
-  return id && id.length > 0 ? id : null;
-};
 
 export const POST = async (req: Request) => {
   if (!isDatabaseConfigured()) {

@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
@@ -37,6 +38,7 @@ const toHistory = (doses: DoseRecord[]): HistoryItem[] =>
 // Today — the one-tap "logged today's shot" hub + the signature injection-site
 // rotation map (spec §3, items 2–3). Persists via the web API → @titrra/db.
 const Today = () => {
+  const router = useRouter();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,6 +134,22 @@ const Today = () => {
               Rested the longest based on your recent doses.
             </Text>
           </View>
+
+          {/* Titration ladder entry point */}
+          <Pressable
+            onPress={() => router.push('/titration')}
+            className="mt-3 flex-row items-center justify-between rounded-2xl border border-border bg-sand p-4 active:bg-mist"
+          >
+            <View className="flex-1">
+              <Text className="font-sans-semibold text-[15px] text-ink">
+                Titration ladder
+              </Text>
+              <Text className="mt-0.5 font-sans text-[13px] text-muted">
+                See where you are on your dose-escalation plan.
+              </Text>
+            </View>
+            <Icon icon="chevron-right" size={16} color="#5a6b69" />
+          </Pressable>
 
           {overusing ? (
             <View className="mt-3 flex-row items-start gap-2 rounded-xl border border-warn/40 bg-warn/10 p-4">

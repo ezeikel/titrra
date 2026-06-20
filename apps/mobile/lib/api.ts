@@ -60,3 +60,33 @@ export const logDose = (input: {
 
 export const listDoses = (): Promise<{ doses: DoseRecord[] }> =>
   request('/api/doses', { method: 'GET' });
+
+// ─── Titration ladder ────────────────────────────────────────────────────────
+
+export type TitrationStepRecord = {
+  id: string;
+  doseMg: number;
+  order: number;
+  plannedStartDate: string | null;
+  actualStartDate: string | null;
+  notes: string | null;
+};
+
+export const listSteps = (): Promise<{ steps: TitrationStepRecord[] }> =>
+  request('/api/titration', { method: 'GET' });
+
+export const addStep = (input: {
+  doseMg: number;
+  plannedStartDate?: string;
+  notes?: string;
+}): Promise<{ step: TitrationStepRecord }> =>
+  request('/api/titration', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+
+export const startStep = (stepId: string): Promise<{ ok: true }> =>
+  request('/api/titration', {
+    method: 'PATCH',
+    body: JSON.stringify({ stepId }),
+  });

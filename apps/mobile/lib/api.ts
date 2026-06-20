@@ -149,3 +149,35 @@ export const logSideEffect = (input: {
 export const listSideEffects = (): Promise<{
   sideEffects: SideEffectRecord[];
 }> => request('/api/side-effects', { method: 'GET' });
+
+// ─── Medication ──────────────────────────────────────────────────────────────
+
+export type Drug =
+  | 'OZEMPIC'
+  | 'WEGOVY'
+  | 'MOUNJARO'
+  | 'ZEPBOUND'
+  | 'RYBELSUS'
+  | 'COMPOUNDED_SEMAGLUTIDE'
+  | 'COMPOUNDED_TIRZEPATIDE'
+  | 'OTHER';
+
+export type MedicationForm = 'INJECTION' | 'ORAL';
+export type ScheduleType = 'WEEKLY' | 'DAILY';
+
+export type MedicationRecord = {
+  id: string;
+  drug: Drug;
+  form: MedicationForm;
+  scheduleType: ScheduleType;
+};
+
+export const updateMedication = (input: {
+  drug?: Drug;
+  form?: MedicationForm;
+  scheduleType?: ScheduleType;
+}): Promise<{ medication: MedicationRecord }> =>
+  request('/api/medication', {
+    method: 'PATCH',
+    body: JSON.stringify(input),
+  });

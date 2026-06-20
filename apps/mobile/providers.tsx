@@ -1,6 +1,7 @@
 import { PostHogProvider } from 'posthog-react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { OnboardingProvider } from '@/contexts/onboarding';
 import { PurchasesProvider } from '@/contexts/purchases';
 import { posthog } from '@/lib/analytics';
 
@@ -28,7 +29,9 @@ const Providers = ({ children }: ProvidersProps) => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <WithPostHog>
-        <PurchasesProvider>{children}</PurchasesProvider>
+        <PurchasesProvider>
+          <OnboardingProvider>{children}</OnboardingProvider>
+        </PurchasesProvider>
       </WithPostHog>
     </SafeAreaProvider>
   </GestureHandlerRootView>

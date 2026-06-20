@@ -2,11 +2,17 @@ import '../global.css';
 import * as Sentry from '@sentry/react-native';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
-import { type ErrorBoundaryProps, Stack } from 'expo-router';
+import {
+  type ErrorBoundaryProps,
+  Stack,
+  useRouter,
+  useSegments,
+} from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Toaster } from 'sonner-native';
+import { useOnboarding } from '@/contexts/onboarding';
 import { trackEvent } from '@/lib/analytics';
 import Providers from '@/providers';
 
@@ -27,6 +33,51 @@ Sentry.init({
   sendDefaultPii: false,
 });
 
+// Entry gate — runs inside Providers so it can read the onboarded flag. Until
+// onboarding is complete, every route redirects into the (onboarding) group;
+// once done, the group is off-limits and we land in the tabs.
+const RootNavigator = () => {
+  const router = useRouter();
+  const segments = useSegments();
+  const { onboarded } = useOnboarding();
+
+  useEffect(() => {
+    if (onboarded === null) return; // flag still loading
+    const inOnboarding = segments[0] === '(onboarding)';
+    if (!onboarded && !inOnboarding) {
+      router.replace('/(onboarding)');
+    } else if (onboarded && inOnboarding) {
+      router.replace('/(tabs)');
+    }
+  }, [onboarded, segments, router]);
+
+  return (
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: '#ffffff' },
+      }}
+    >
+      <Stack.Screen name="(onboarding)" />
+      <Stack.Screen name="(tabs)" />
+      <Stack.Screen
+        name="titration"
+        options={{
+          headerShown: true,
+          title: 'Titration ladder',
+          headerBackTitle: 'Back',
+          headerTintColor: '#0f766e',
+          headerStyle: { backgroundColor: '#faf8f3' },
+        }}
+      />
+      <Stack.Screen
+        name="paywall"
+        options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
+      />
+    </Stack>
+  );
+};
+
 const RootLayout = () => {
   useEffect(() => {
     trackEvent('app_opened');
@@ -35,28 +86,7 @@ const RootLayout = () => {
   return (
     <Providers>
       <StatusBar style="dark" />
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: '#ffffff' },
-        }}
-      >
-        <Stack.Screen name="(tabs)" />
-        <Stack.Screen
-          name="titration"
-          options={{
-            headerShown: true,
-            title: 'Titration ladder',
-            headerBackTitle: 'Back',
-            headerTintColor: '#0f766e',
-            headerStyle: { backgroundColor: '#faf8f3' },
-          }}
-        />
-        <Stack.Screen
-          name="paywall"
-          options={{ presentation: 'modal', animation: 'slide_from_bottom' }}
-        />
-      </Stack>
+      <RootNavigator />
       <Toaster position="top-center" />
     </Providers>
   );

@@ -1,0 +1,52 @@
+{
+  "name": "titrra",
+  "private": true,
+  "packageManager": "pnpm@10.25.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "dev:web": "turbo run dev --filter=@titrra/web",
+    "dev:mobile": "pnpm --filter @titrra/mobile dev",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint --write .",
+    "check": "biome check .",
+    "check:fix": "biome check --write .",
+    "check-types": "turbo run check-types",
+    "format": "biome format --write .",
+    "prepare": "husky",
+    "test": "turbo run test"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx,json,jsonc,css,md}": [
+      "biome check --write --no-errors-on-unmatched"
+    ],
+    "**/prisma/schema.prisma": [
+      "pnpm --filter @titrra/db exec prisma format"
+    ]
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.4.16",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.0.0",
+    "turbo": "^2.5.6",
+    "typescript": "^5.7.3"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@sentry/cli",
+      "core-js",
+      "sharp",
+      "unrs-resolver"
+    ],
+    "overrides": {
+      "react": "19.2.4",
+      "react-dom": "19.2.4",
+      "@types/react": "19.2.14",
+      "@types/react-dom": "19.2.3",
+      "lightningcss": "1.30.1"
+    }
+  }
+}

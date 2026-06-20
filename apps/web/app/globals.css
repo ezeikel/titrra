@@ -1,0 +1,100 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --font-sans: var(--font-inter), "Inter Fallback", system-ui, sans-serif;
+  --font-heading: var(--font-inter);
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  /* Titrra brand tokens — calm, clinical, premium. Teal primary + soft sand
+   * surfaces. Sharper than a medical chart, softer than a startup. */
+  --color-teal: var(--teal);
+  --color-teal-deep: var(--teal-deep);
+  --color-sand: var(--sand);
+  --color-ink: var(--ink);
+  --color-mist: var(--mist);
+  --color-success: var(--success);
+  --color-warn: var(--warn);
+
+  /* shadcn mappings */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
+
+:root {
+  /* Brand palette */
+  --teal: #0d9488;
+  --teal-deep: #0f766e;
+  --sand: #faf8f3;
+  --ink: #0e1a1a;
+  --mist: #eef2f1;
+  --success: #16a34a;
+  --warn: #d97706;
+
+  --radius: 0.875rem;
+
+  /* shadcn light mappings */
+  --background: #ffffff;
+  --foreground: #0e1a1a;
+  --card: #ffffff;
+  --card-foreground: #0e1a1a;
+  --popover: #ffffff;
+  --popover-foreground: #0e1a1a;
+  --primary: #0d9488;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2f1;
+  --secondary-foreground: #0e1a1a;
+  --muted: #eef2f1;
+  --muted-foreground: #5a6b69;
+  --accent: #e6f3f1;
+  --accent-foreground: #0f766e;
+  --destructive: #dc2626;
+  --border: #e2e8e6;
+  --input: #e2e8e6;
+  --ring: #0d9488;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+    -webkit-font-smoothing: antialiased;
+  }
+  html {
+    @apply font-sans;
+    color-scheme: light;
+  }
+}
+
+/* Eyebrow label */
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 700;
+  font-size: 0.6875rem;
+}

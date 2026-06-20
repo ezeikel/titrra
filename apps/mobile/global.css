@@ -1,0 +1,28 @@
+@import "tailwindcss";
+@import "nativewind/theme";
+
+/* Titrra design tokens — mirrors the web app/globals.css. Calm, clinical,
+ * premium: teal primary, soft sand surfaces. */
+@theme {
+  /* Fonts (PostScript names registered via the expo-font config plugin) */
+  --font-sans: "Inter-Regular";
+  --font-sans-medium: "Inter-Medium";
+  --font-sans-semibold: "Inter-SemiBold";
+  --font-sans-bold: "Inter-Bold";
+  --font-mono: "GeistMono-Regular";
+
+  /* Brand palette */
+  --color-teal: #0d9488;
+  --color-teal-deep: #0f766e;
+  --color-sand: #faf8f3;
+  --color-ink: #0e1a1a;
+  --color-mist: #eef2f1;
+  --color-paper: #ffffff;
+
+  /* Data / status */
+  --color-success: #16a34a;
+  --color-warn: #d97706;
+  --color-destructive: #dc2626;
+  --color-muted: #5a6b69;
+  --color-border: #e2e8e6;
+}

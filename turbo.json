@@ -1,0 +1,65 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "ui": "tui",
+  "tasks": {
+    "transit": {
+      "dependsOn": ["^transit"]
+    },
+    "build": {
+      "dependsOn": ["test", "^build", "@titrra/db#db:generate"],
+      "inputs": ["$TURBO_DEFAULT$", ".env*"],
+      "outputs": [".next/**", "!.next/cache/**", "dist/**"],
+      "env": [
+        "DATABASE_URL",
+        "SHADOW_DATABASE_URL",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "SENTRY_DSN",
+        "SENTRY_AUTH_TOKEN",
+        "STRIPE_SECRET_KEY",
+        "STRIPE_WEBHOOK_SECRET",
+        "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+        "RESEND_API_KEY",
+        "EXPO_PUBLIC_ENVIRONMENT",
+        "EXPO_PUBLIC_APP_URL",
+        "EXPO_PUBLIC_API_URL",
+        "EXPO_PUBLIC_POSTHOG_KEY",
+        "EXPO_PUBLIC_POSTHOG_API_KEY",
+        "EXPO_PUBLIC_POSTHOG_HOST",
+        "EXPO_PUBLIC_SENTRY_DSN",
+        "EXPO_PUBLIC_REVENUECAT_IOS_KEY",
+        "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "VERCEL_ENV",
+        "VERCEL_URL"
+      ]
+    },
+    "dev": {
+      "dependsOn": ["@titrra/db#db:generate"],
+      "cache": false,
+      "persistent": true
+    },
+    "check-types": {
+      "dependsOn": ["transit"]
+    },
+    "db:generate": {
+      "cache": false,
+      "inputs": ["packages/db/prisma/schema.prisma"],
+      "outputs": ["packages/db/src/generated/prisma/**"],
+      "env": ["DATABASE_URL"]
+    },
+    "db:migrate": {
+      "cache": false,
+      "persistent": true
+    },
+    "db:deploy": {
+      "cache": false
+    },
+    "test": {
+      "dependsOn": ["^build"],
+      "outputs": []
+    }
+  }
+}

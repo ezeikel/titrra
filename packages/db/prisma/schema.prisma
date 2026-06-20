@@ -1,0 +1,232 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+enum Units {
+  METRIC
+  IMPERIAL
+}
+
+enum Drug {
+  OZEMPIC
+  WEGOVY
+  MOUNJARO
+  ZEPBOUND
+  RYBELSUS
+  COMPOUNDED_SEMAGLUTIDE
+  COMPOUNDED_TIRZEPATIDE
+  OTHER
+}
+
+enum MedicationForm {
+  INJECTION
+  ORAL
+}
+
+enum ScheduleType {
+  WEEKLY
+  DAILY
+}
+
+// Injection-site rotation map. Left/right of the three canonical sites — the
+// app suggests the next site to avoid overuse (signature feature).
+enum InjectionSite {
+  ABDOMEN_L
+  ABDOMEN_R
+  THIGH_L
+  THIGH_R
+  ARM_L
+  ARM_R
+}
+
+enum WeightUnit {
+  KG
+  LB
+}
+
+enum SideEffectType {
+  NAUSEA
+  CONSTIPATION
+  DIARRHEA
+  FATIGUE
+  REFLUX
+  HEADACHE
+  INJECTION_SITE_REACTION
+  OTHER
+}
+
+enum ReminderType {
+  DOSE
+  PILL
+  WEIGH_IN
+  PROTEIN
+  WATER
+}
+
+// ─── Models ──────────────────────────────────────────────────────────────────
+
+// Anonymous-first: email is nullable so a user can track without an account
+// and claim later. Subscription state lives in RevenueCat (mobile) / Stripe
+// (web); a server-side mirror table is deferred until web + mobile need a
+// unified view (see spec §6).
+model User {
+  id                String   @id @default(cuid())
+  email             String?  @unique
+  healthSyncEnabled Boolean  @default(false)
+  units             Units    @default(METRIC)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  medications    Medication[]
+  weightLogs     WeightLog[]
+  sideEffectLogs SideEffectLog[]
+  intakeLogs     IntakeLog[]
+  reminders      Reminder[]
+
+  @@map("users")
+}
+
+model Medication {
+  id           String         @id @default(cuid())
+  userId       String
+  drug         Drug
+  form         MedicationForm
+  scheduleType ScheduleType
+  startedAt    DateTime       @default(now())
+  active       Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titrationSteps  TitrationStep[]
+  doseLogs        DoseLog[]
+  reminders       Reminder[]
+
+  @@index([userId, active])
+  @@map("medications")
+}
+
+// The namesake feature: the dose-escalation ladder (e.g. 2.5 → 5 → 7.5 → 10mg).
+// `order` sequences the rungs; planned vs actual start dates drive the
+// "time to step up" reminders and the provider-consult prompts.
+model TitrationStep {
+  id               String    @id @default(cuid())
+  medicationId     String
+  doseMg           Float
+  order            Int
+  plannedStartDate DateTime?
+  actualStartDate  DateTime?
+  notes            String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@unique([medicationId, order])
+  @@index([medicationId, order])
+  @@map("titration_steps")
+}
+
+// One-tap "logged today's shot". `injectionSite` is nullable for oral meds and
+// feeds the rotation-map suggestion. `skipped` records an intentionally missed
+// dose without inventing a fake takenAt.
+model DoseLog {
+  id            String         @id @default(cuid())
+  medicationId  String
+  takenAt       DateTime       @default(now())
+  doseMg        Float
+  injectionSite InjectionSite?
+  skipped       Boolean        @default(false)
+  notes         String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  medication Medication @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@index([medicationId, takenAt(sort: Desc)])
+  @@map("dose_logs")
+}
+
+// Quick weight entry + trend line. `photoUrl` is the optional progress photo
+// (Pro). Injection-site rotation state is DERIVED from DoseLog history, not
+// stored — there is intentionally no InjectionSite table.
+model WeightLog {
+  id         String     @id @default(cuid())
+  userId     String
+  recordedAt DateTime   @default(now())
+  weight     Float
+  unit       WeightUnit
+  photoUrl   String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt(sort: Desc)])
+  @@map("weight_logs")
+}
+
+model SideEffectLog {
+  id         String         @id @default(cuid())
+  userId     String
+  occurredAt DateTime       @default(now())
+  type       SideEffectType
+  // 1–5 severity (validated in app code — Postgres has no native range check
+  // we set here; keep the contract in the type layer).
+  severity   Int
+  notes      String?
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, occurredAt(sort: Desc)])
+  @@index([userId, type])
+  @@map("side_effect_logs")
+}
+
+// Protein / water nudges (Pro). One row per user per day; `date` is YYYY-MM-DD
+// in the user's local calendar so the daily aggregate is stable across tz.
+model IntakeLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String
+  proteinG  Float?
+  waterMl   Float?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId, date])
+  @@map("intake_logs")
+}
+
+// Local-notification schedule. `medicationId` is nullable for non-med
+// reminders (weigh-in / protein / water). `schedule` holds the cron-ish or
+// ISO recurrence string the client uses to register expo-notifications.
+model Reminder {
+  id           String       @id @default(cuid())
+  userId       String
+  medicationId String?
+  type         ReminderType
+  schedule     String
+  enabled      Boolean      @default(true)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  medication Medication? @relation(fields: [medicationId], references: [id], onDelete: Cascade)
+
+  @@index([userId, enabled])
+  @@index([medicationId])
+  @@map("reminders")
+}

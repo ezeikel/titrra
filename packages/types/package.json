@@ -1,0 +1,19 @@
+{
+  "name": "@titrra/types",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Titrra TypeScript types: domain models, analytics event vocabulary, and DTOs. Consumed as TypeScript source by web (Next transpilePackages) and mobile (Metro).",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "check-types": "tsc --noEmit",
+    "test": "echo \"no unit tests in packages/types yet\" && exit 0"
+  },
+  "devDependencies": {
+    "typescript": "5.7.3"
+  }
+}

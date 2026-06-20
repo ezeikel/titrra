@@ -1,0 +1,57 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+next-env.d.ts
+
+# production
+build/
+dist/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files
+.env
+.env.*
+!.env.example
+
+# vercel
+.vercel
+
+# turbo
+.turbo
+
+# typescript
+*.tsbuildinfo
+
+# sentry
+.sentryclirc
+
+# editor/agent
+.vscode/
+.claude/
+.mcp.json
+
+# expo (apps/mobile)
+.expo/
+expo-env.d.ts
+ios/
+android/
+
+# google play service account key (EAS submit) — never commit
+google-service-account.json
+
+# native build artifacts (EAS / local builds — large binaries)
+*.ipa
+*.apk
+*.aab

@@ -1,0 +1,162 @@
+name: Database Migrations
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/db/prisma/**'
+      - 'packages/db/prisma.config.ts'
+      - '.github/workflows/database-migrations.yml'
+  pull_request:
+    paths:
+      - 'packages/db/prisma/**'
+      - 'packages/db/prisma.config.ts'
+      - '.github/workflows/database-migrations.yml'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '22'
+
+jobs:
+  validate-schema:
+    runs-on: ubuntu-latest
+    name: Validate Prisma schema
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_AUTH_TOKEN }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate Prisma schema
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        working-directory: ./packages/db
+        run: pnpm exec prisma validate
+
+      - name: Check for formatting issues
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        working-directory: ./packages/db
+        run: pnpm exec prisma format --check
+
+  check-drift:
+    runs-on: ubuntu-latest
+    name: Schema ↔ Migrations parity
+    needs: validate-schema
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: prisma
+          POSTGRES_PASSWORD: prisma
+          POSTGRES_DB: shadow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_AUTH_TOKEN }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Check schema ↔ migrations parity
+        working-directory: ./packages/db
+        env:
+          SHADOW_DATABASE_URL: 'postgresql://prisma:prisma@localhost:5432/shadow'
+          DATABASE_URL: 'postgresql://prisma:prisma@localhost:5432/postgres'
+        run: |
+          set +e
+          pnpm exec prisma migrate diff \
+            --from-migrations prisma/migrations \
+            --to-schema prisma/schema.prisma \
+            --exit-code
+          exit_code=$?
+          set -e
+
+          if [ $exit_code -eq 2 ]; then
+            echo "::error::Drift detected between schema.prisma and migrations/"
+            echo ""
+            echo "schema.prisma no longer matches what applying migrations/ would produce."
+            echo "Either:"
+            echo "  • schema.prisma was edited without running 'pnpm --filter @titrra/db db:migrate --name <descriptive_name>', or"
+            echo "  • a migration.sql was hand-written with SQL that doesn't match."
+            echo ""
+            echo "Fix: in packages/db, revert the drift and run the migrate command locally so Prisma generates the correct migration."
+            exit 1
+          elif [ $exit_code -eq 0 ]; then
+            echo "✓ schema.prisma and migrations/ are in sync"
+            exit 0
+          else
+            echo "::error::prisma migrate diff failed with exit code $exit_code"
+            exit $exit_code
+          fi
+
+  migrate:
+    runs-on: ubuntu-latest
+    name: Migrate database
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
+    needs: [validate-schema, check-drift]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        env:
+          FONTAWESOME_NPM_AUTH_TOKEN: ${{ secrets.FONTAWESOME_NPM_AUTH_TOKEN }}
+        run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma client
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        working-directory: ./packages/db
+        run: pnpm exec prisma generate
+
+      - name: Run database migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        working-directory: ./packages/db
+        run: pnpm exec prisma migrate deploy

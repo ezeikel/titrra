@@ -90,3 +90,62 @@ export const startStep = (stepId: string): Promise<{ ok: true }> =>
     method: 'PATCH',
     body: JSON.stringify({ stepId }),
   });
+
+// ─── Weight ──────────────────────────────────────────────────────────────────
+
+export type WeightUnit = 'KG' | 'LB';
+
+export type WeightRecord = {
+  id: string;
+  weight: number;
+  unit: WeightUnit;
+  recordedAt: string;
+};
+
+export const logWeight = (input: {
+  weight: number;
+  unit: WeightUnit;
+  recordedAt?: string;
+}): Promise<{ weight: WeightRecord }> =>
+  request('/api/weight', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+
+export const listWeights = (): Promise<{ weights: WeightRecord[] }> =>
+  request('/api/weight', { method: 'GET' });
+
+// ─── Side effects ────────────────────────────────────────────────────────────
+
+export type SideEffectType =
+  | 'NAUSEA'
+  | 'CONSTIPATION'
+  | 'DIARRHEA'
+  | 'FATIGUE'
+  | 'REFLUX'
+  | 'HEADACHE'
+  | 'INJECTION_SITE_REACTION'
+  | 'OTHER';
+
+export type SideEffectRecord = {
+  id: string;
+  type: SideEffectType;
+  severity: number;
+  notes: string | null;
+  occurredAt: string;
+};
+
+export const logSideEffect = (input: {
+  type: SideEffectType;
+  severity: number;
+  notes?: string;
+  occurredAt?: string;
+}): Promise<{ sideEffect: SideEffectRecord }> =>
+  request('/api/side-effects', {
+    method: 'POST',
+    body: JSON.stringify(input),
+  });
+
+export const listSideEffects = (): Promise<{
+  sideEffects: SideEffectRecord[];
+}> => request('/api/side-effects', { method: 'GET' });

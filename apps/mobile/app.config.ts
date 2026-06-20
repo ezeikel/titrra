@@ -23,8 +23,11 @@ const bundleId =
       ? 'com.chewybytes.titrra.app.internal'
       : 'com.chewybytes.titrra.app.dev';
 
-// Set after `eas init` mints the project. Empty is fine until then.
-const EAS_PROJECT_ID = process.env.EAS_PROJECT_ID ?? '';
+// Minted by `eas init` under the chewybytes org (@chewybytes/titrra). Not
+// secret — it must be present in every build, so it's a hardcoded default with
+// an env override (matches go-unbeaten's pattern).
+const EAS_PROJECT_ID =
+  process.env.EAS_PROJECT_ID ?? 'be088d33-0a70-4a53-8db0-ea198201c3b1';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   // Per-variant icons if present, else fall back to the prod icon.
@@ -47,6 +50,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     icon: pickIcon('icon'),
     scheme: 'titrra',
     userInterfaceStyle: 'light',
+    web: {
+      bundler: 'metro',
+      output: 'static',
+      favicon: './assets/images/icon.png',
+    },
     ios: {
       supportsTablet: true,
       bundleIdentifier: bundleId,
@@ -55,6 +63,39 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       associatedDomains: ['applinks:titrra.com'],
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+      },
+      // Required by App Store review (iOS 17.2+) because we bundle a tracking
+      // SDK (PostHog) and touch the listed APIs. Mirrors ptp's manifest, scoped
+      // to what Titrra actually uses.
+      privacyManifests: {
+        NSPrivacyTracking: false,
+        NSPrivacyTrackingDomains: [],
+        NSPrivacyCollectedDataTypes: [],
+        NSPrivacyAccessedAPITypes: [
+          {
+            // AsyncStorage → UserDefaults.
+            NSPrivacyAccessedAPIType:
+              'NSPrivacyAccessedAPICategoryUserDefaults',
+            NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+          },
+          {
+            // File timestamps (Expo file system / caches).
+            NSPrivacyAccessedAPIType:
+              'NSPrivacyAccessedAPICategoryFileTimestamp',
+            NSPrivacyAccessedAPITypeReasons: ['C617.1'],
+          },
+          {
+            // Disk space checks.
+            NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+            NSPrivacyAccessedAPITypeReasons: ['E174.1'],
+          },
+          {
+            // System boot time (used by analytics/crash SDKs).
+            NSPrivacyAccessedAPIType:
+              'NSPrivacyAccessedAPICategorySystemBootTime',
+            NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+          },
+        ],
       },
     },
     android: {
@@ -67,7 +108,12 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         {
           action: 'VIEW',
           autoVerify: true,
-          data: [{ scheme: 'https', host: 'titrra.com' }],
+          data: [{ scheme: 'https', host: 'titrra.com', pathPrefix: '/' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+        {
+          action: 'VIEW',
+          data: [{ scheme: 'titrra' }],
           category: ['BROWSABLE', 'DEFAULT'],
         },
       ],
@@ -112,6 +158,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       [
         'expo-build-properties',
         {
+          ios: {
+            deploymentTarget: '16.4',
+          },
           android: {
             compileSdkVersion: 36,
             targetSdkVersion: 36,

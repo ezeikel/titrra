@@ -56,6 +56,17 @@
     }
   },
   "submit": {
+    "internal": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json",
+        "track": "internal"
+      },
+      "ios": {
+        "appleId": "developer@chewybytes.com",
+        "appleTeamId": "HGX827L49J",
+        "ascAppId": "6782397414"
+      }
+    },
     "production": {
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",

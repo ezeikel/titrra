@@ -173,6 +173,41 @@ premium feel? Decision: **yes, but scoped to ONE hero moment, and deferred.**
    - **Verified on the iOS simulator** (Android emulator `/data` can't fit the
      Skia+three APK — see SHIP-CHECKLIST build gotchas).
 
+   **⚠️ SUPERSEDED — the expo-gl + procedural-mannequin details above were the
+   FIRST attempt. The shipped version (commit `045b3fd`) is different; see 4b-1.**
+
+## 4b-1. 3D body map — what actually shipped + GPU-stack decisions (2026-06-22)
+
+The expo-gl path (4b) was abandoned mid-build: **expo-gl renders through OpenGL
+ES, which is dead on the Apple-Silicon iOS simulator** (Apple platform bug — blank
+surface, no error; proven with a magenta-clear probe). The shipped feature:
+
+- **GPU backend: `react-native-webgpu` (`react-native-wgpu@0.5.15`, the LATEST)
+  → Dawn → Metal.** Metal works on the sim (Skia already proved it), so the 3D
+  paints where expo-gl couldn't. Still **three.js (`three/webgpu`) + React Three
+  Fiber** — `FiberCanvas` bridges the wgpu Canvas to R3F's reconciler.
+- **Model: real CC0 Quaternius human GLB** (not the procedural mannequin), loaded
+  by reading bytes via `expo-file-system/legacy` + `GLTFLoader.parse` (RN `fetch`
+  can't read `file://`; SDK 56 moved `readAsStringAsync` to `/legacy`).
+- Same `USE_3D_BODY_MAP` flag + 2D-Skia error-boundary fallback. Full build recipe
+  (arm64-only sim, podspec patch, init ordering) is in SHIP-CHECKLIST.
+
+**GPU-stack decisions (evaluated 2026-06-22) — captured so they aren't re-litigated:**
+- **WebGPU lib:** on the latest (`react-native-wgpu@0.5.15`, newest published). ✅
+- **TypeGPU (swmansion):** EVALUATED, REJECTED. It's a typed way to author *raw*
+  WebGPU pipelines/shaders yourself, sitting on top of react-native-wgpu — it has
+  nothing to do with three.js/R3F (which already own our pipelines). It'd add a
+  Babel plugin + dep for zero benefit to a three.js app. Only worth it if we ever
+  want a bespoke compute/render effect *outside* what three exposes (e.g. a custom
+  particle/fluid background) — and only for that effect.
+- **Skia Graphite + WebGPU composability (the conference demo — Skia 2D painted
+  directly onto a shared WebGPU 3D surface):** WATCH + DEFER. As of mid-2025 it's
+  **behind an experimental flag, "not ready for prime time"**, and it uses Skia's
+  OWN 3D — adopting it means rewriting off three.js/GLTF, not a tweak. Revisit as a
+  fast-follow ONLY once Graphite is non-experimental AND we're willing to leave
+  three.js. Our current crisp 2D labels are plain RN `<Text>` over the canvas —
+  good enough; the composited-Skia win is polish, not a capability gap.
+
 ## 4c. Input patterns — decided + built (2026-06-22)
 
 Friction audit + Mobbin confirmed: lead with PREDICT, not ASK. Patterns chosen:

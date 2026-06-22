@@ -3,7 +3,7 @@ import { type RefObject, useEffect, useMemo, useRef } from 'react';
 import { Dimensions, Text, View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as THREE from 'three/webgpu';
-import { FiberCanvas } from '@/components/FiberCanvas';
+import { FiberCanvas, type FiberCanvasHandle } from '@/components/FiberCanvas';
 import { HumanModel } from '@/components/HumanModel';
 import {
   INJECTION_SITES,
@@ -63,13 +63,11 @@ const SiteAnchor = ({
   selected,
   suggested,
   warmth,
-  onSelect,
 }: {
   site: InjectionSite;
   selected: boolean;
   suggested: boolean;
   warmth: number;
-  onSelect: (site: InjectionSite) => void;
 }) => {
   const matRef = useRef<THREE.MeshStandardMaterial>(null);
 
@@ -90,17 +88,14 @@ const SiteAnchor = ({
 
   return (
     // renderOrder + depthTest off → markers always draw on top of the body so
-    // all 6 sites stay visible (a site picker should show every option, not
-    // hide ones the torso occludes).
+    // all 6 sites stay visible. userData.siteId is read by the tap raycaster
+    // (R3F's onClick can't fire on the RN wgpu canvas — see FiberCanvas).
     <mesh
       position={ANCHORS[site]}
       renderOrder={10}
-      onClick={(e) => {
-        e.stopPropagation();
-        onSelect(site);
-      }}
+      userData={{ siteId: site }}
     >
-      <sphereGeometry args={[0.07, 24, 24]} />
+      <sphereGeometry args={[0.09, 24, 24]} />
       <meshStandardMaterial
         ref={matRef}
         color={color}
@@ -123,9 +118,8 @@ const Body = ({
   selected,
   suggested,
   recent,
-  onSelect,
   rot,
-}: BodyMap3DProps & { rot: RotRef }) => {
+}: Omit<BodyMap3DProps, 'onSelect'> & { rot: RotRef }) => {
   const group = useRef<THREE.Group>(null);
   const { camera } = useThree();
   const recency = useMemo(() => recencyMap(recent), [recent]);
@@ -161,7 +155,6 @@ const Body = ({
           selected={s === selected}
           suggested={s === suggested}
           warmth={recency[s]}
-          onSelect={onSelect}
         />
       ))}
     </group>
@@ -183,69 +176,85 @@ export const BodyMap3D = ({
   // the useFrame loop reads it each frame.
   const rot = useRef({ x: 0, y: 0 });
   const start = useRef({ x: 0, y: 0 });
-
-  const pan = useMemo(
-    () =>
-      Gesture.Pan()
-        .onBegin(() => {
-          start.current = { ...rot.current };
-        })
-        .onChange((e) => {
-          rot.current.y = start.current.y + e.translationX * 0.01;
-          rot.current.x = Math.max(
-            -0.4,
-            Math.min(0.4, start.current.x + e.translationY * 0.01),
-          );
-        })
-        // Handlers must run on the JS thread to mutate the ref the R3F loop reads.
-        .runOnJS(true),
-    [],
-  );
+  const canvasRef = useRef<FiberCanvasHandle>(null);
 
   // Explicit pixel dimensions — the WebGPU canvas needs a definite size.
   const canvasW = Math.max(
     240,
     Math.min(Dimensions.get('window').width - 48, 340),
   );
-  const canvasH = 280;
+  const canvasH = 320;
+
+  const gesture = useMemo(() => {
+    const pan = Gesture.Pan()
+      .onBegin(() => {
+        start.current = { ...rot.current };
+      })
+      .onChange((e) => {
+        rot.current.y = start.current.y + e.translationX * 0.01;
+        rot.current.x = Math.max(
+          -0.4,
+          Math.min(0.4, start.current.x + e.translationY * 0.01),
+        );
+      })
+      // Handlers must run on the JS thread to mutate the ref the R3F loop reads.
+      .runOnJS(true);
+
+    // A clean tap raycasts into the scene and selects the hit site. R3F's
+    // onClick can't fire on the RN wgpu canvas, so we pick manually here.
+    const tap = Gesture.Tap()
+      .maxDuration(250)
+      .onEnd((e) => {
+        const hit = canvasRef.current?.pick(e.x, e.y);
+        // Walk up to the anchor mesh carrying userData.siteId.
+        let o = hit;
+        while (o) {
+          const id = o.userData?.siteId as InjectionSite | undefined;
+          if (id) {
+            onSelect(id);
+            return;
+          }
+          o = o.parent;
+        }
+      })
+      .runOnJS(true);
+
+    // Pan and tap coexist: a drag rotates, a clean tap selects.
+    return Gesture.Race(pan, tap);
+  }, [onSelect]);
 
   return (
     <View className="items-center">
-      {/* Gesture on the OUTER view so a drag rotates the body. The sized view
-          gives the WebGPU canvas a definite drawing buffer. */}
-      <GestureDetector gesture={pan}>
+      {/* Gesture wraps the sized view (which gives the WebGPU canvas a definite
+          drawing buffer). Background is TRANSPARENT — the canvas blends into the
+          surrounding card. */}
+      <GestureDetector gesture={gesture}>
         <View
           collapsable={false}
-          style={{
-            width: canvasW,
-            height: canvasH,
-            // Sand backdrop behind the (transparent) WebGPU surface, rounded
-            // into a soft card. WebGPURenderer's clear color / scene.background
-            // isn't reliably honored under the imperative root, so the RN view
-            // colour is the dependable way to set the background.
-            backgroundColor: '#f7f4ed',
-            borderRadius: 24,
-            overflow: 'hidden',
-          }}
+          style={{ width: canvasW, height: canvasH }}
         >
-          <FiberCanvas style={{ width: canvasW, height: canvasH }}>
-            <ambientLight intensity={2.2} color="#fff6e9" />
-            <hemisphereLight args={['#fff4e0', '#e6dcc8', 1.2]} />
+          <FiberCanvas
+            ref={canvasRef}
+            width={canvasW}
+            height={canvasH}
+            style={{ width: canvasW, height: canvasH }}
+          >
+            <ambientLight intensity={1.8} color="#fff6e9" />
+            <hemisphereLight args={['#fff4e0', '#e6dcc8', 1.0]} />
             <directionalLight
               position={[3, 5, 4]}
-              intensity={2.6}
+              intensity={2.4}
               color="#fff1dd"
             />
             <directionalLight
               position={[-3, 2, -4]}
-              intensity={0.8}
+              intensity={0.7}
               color="#dfeeec"
             />
             <Body
               selected={selected}
               suggested={suggested}
               recent={recent}
-              onSelect={onSelect}
               rot={rot}
             />
           </FiberCanvas>

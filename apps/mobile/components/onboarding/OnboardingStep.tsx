@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Icon } from '@/components/Icon';
+import { ProgressDots } from '@/components/onboarding/ProgressDots';
 
 type OnboardingStepProps = {
   // 1-based step index + total, drives the progress bar. Omit on the welcome.
@@ -34,12 +35,11 @@ export const OnboardingStep = ({
 }: OnboardingStepProps) => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const pct =
-    step != null && total != null ? Math.round((step / total) * 100) : null;
+  const showProgress = step != null && total != null;
 
   return (
-    <View className="flex-1 bg-paper">
-      {/* Header: back + progress + skip */}
+    <View className="flex-1 bg-sand">
+      {/* Header: back + progress dots + skip */}
       <View style={{ paddingTop: insets.top + 8 }} className="px-5">
         <View className="h-9 flex-row items-center justify-between">
           {!hideBack && router.canGoBack() ? (
@@ -50,15 +50,13 @@ export const OnboardingStep = ({
               accessibilityLabel="Go back"
               className="size-9 items-center justify-center"
             >
-              <Icon icon="chevron-left" size={18} color="#5a6b69" />
+              <Icon icon="chevron-left" size={18} color="#5f706e" />
             </Pressable>
           ) : (
             <View className="size-9" />
           )}
-          {pct != null ? (
-            <Text className="font-sans-semibold text-[12px] text-muted">
-              {step} of {total}
-            </Text>
+          {showProgress ? (
+            <ProgressDots total={total} activeIndex={step - 1} />
           ) : (
             <View />
           )}
@@ -77,21 +75,17 @@ export const OnboardingStep = ({
             <View className="w-9" />
           )}
         </View>
-        {pct != null ? (
-          <View className="mt-2 h-1.5 overflow-hidden rounded-full bg-mist">
-            <View
-              className="h-full rounded-full bg-teal"
-              style={{ width: `${pct}%` }}
-            />
-          </View>
-        ) : null}
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 24 }}
+        contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 24 }}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <Text className="font-sans-bold text-[30px] leading-[34px] text-ink">
+        <Text
+          className="font-display-bold text-[30px] leading-[36px] text-ink"
+          allowFontScaling={false}
+        >
           {title}
         </Text>
         {subtitle ? (

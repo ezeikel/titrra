@@ -77,7 +77,7 @@ const BuildingStep = () => {
       <View className="size-16 items-center justify-center rounded-2xl bg-accent">
         <Icon icon="chart-line" size={28} />
       </View>
-      <ActivityIndicator color="#0d9488" className="mt-8" />
+      <ActivityIndicator color="#0e7c7b" className="mt-8" />
       <Text className="mt-5 font-sans-semibold text-[16px] text-ink">
         {label}
       </Text>

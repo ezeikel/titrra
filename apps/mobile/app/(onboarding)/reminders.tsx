@@ -46,7 +46,7 @@ const RemindersStep = () => {
       continueLabel={asking ? 'Just a sec…' : 'Turn on reminders'}
       onContinue={enable}
     >
-      <View className="rounded-2xl border border-border bg-sand p-5">
+      <View className="rounded-2xl border border-border bg-paper p-5">
         <View className="flex-row items-center gap-3">
           <View className="size-11 items-center justify-center rounded-xl bg-accent">
             <Icon icon="syringe" size={20} />

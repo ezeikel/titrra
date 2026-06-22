@@ -32,7 +32,7 @@ export const ProGate = ({ feature, perks, children }: ProGateProps) => {
   if (!ready) {
     return (
       <View className="flex-1 items-center justify-center bg-paper">
-        <ActivityIndicator color="#0d9488" />
+        <ActivityIndicator color="#0e7c7b" />
         <Text className="mt-3 font-sans text-[13px] text-muted">
           Loading your plan…
         </Text>
@@ -83,7 +83,7 @@ export const ProGate = ({ feature, perks, children }: ProGateProps) => {
         <View className="mt-7 gap-2">
           {perks.map((p) => (
             <View key={p} className="flex-row items-center gap-2">
-              <Icon icon="chevron-right" size={13} color="#0d9488" />
+              <Icon icon="chevron-right" size={13} color="#0e7c7b" />
               <Text className="font-sans text-[14px] text-ink">{p}</Text>
             </View>
           ))}

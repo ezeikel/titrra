@@ -34,9 +34,9 @@ const WeightStep = () => {
             set({ currentWeight: t && Number.isFinite(n) && n > 0 ? n : null });
           }}
           placeholder="0.0"
-          placeholderTextColor="#9aa8a6"
+          placeholderTextColor="#93a09d"
           keyboardType="decimal-pad"
-          className="h-14 flex-1 rounded-2xl border border-border bg-sand px-4 font-sans-bold text-[20px] text-ink"
+          className="h-14 flex-1 rounded-2xl border-2 border-border bg-paper px-4 font-sans-bold text-[20px] text-ink"
         />
         <View className="flex-row overflow-hidden rounded-2xl border border-border">
           {(['KG', 'LB'] as WeightUnit[]).map((u) => {
@@ -48,7 +48,7 @@ const WeightStep = () => {
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 accessibilityLabel={`Unit ${u.toLowerCase()}`}
-                className={`px-5 py-4 ${selected ? 'bg-teal' : 'bg-sand'}`}
+                className={`px-5 py-4 ${selected ? 'bg-teal' : 'bg-paper'}`}
               >
                 <Text
                   className={`font-sans-bold text-[14px] ${

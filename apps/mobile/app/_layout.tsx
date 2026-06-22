@@ -71,7 +71,7 @@ const RootNavigator = () => {
           headerShown: true,
           title: 'Titration ladder',
           headerBackTitle: 'Back',
-          headerTintColor: '#0f766e',
+          headerTintColor: '#0a5f5e',
           headerStyle: { backgroundColor: '#faf8f3' },
         }}
       />
@@ -117,14 +117,14 @@ export const ErrorBoundary = ({ error, retry }: ErrorBoundaryProps) => {
       <Text style={{ fontSize: 18, fontWeight: '700', color: '#0e1a1a' }}>
         Something went wrong
       </Text>
-      <Text style={{ marginTop: 8, textAlign: 'center', color: '#5a6b69' }}>
+      <Text style={{ marginTop: 8, textAlign: 'center', color: '#5f706e' }}>
         Titrra hit an unexpected error on startup. Please try again.
       </Text>
       <Pressable
         onPress={retry}
         style={{
           marginTop: 24,
-          backgroundColor: '#0d9488',
+          backgroundColor: '#0e7c7b',
           paddingHorizontal: 24,
           paddingVertical: 12,
           borderRadius: 12,

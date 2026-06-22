@@ -144,10 +144,18 @@ export default ({ config }: ConfigContext): ExpoConfig => {
         'expo-font',
         {
           fonts: [
+            // Body / UI
             './assets/fonts/Inter-Regular.ttf',
             './assets/fonts/Inter-Medium.ttf',
             './assets/fonts/Inter-SemiBold.ttf',
             './assets/fonts/Inter-Bold.ttf',
+            // Display — Bricolage Grotesque (editorial, premium-health). Used
+            // for headings + big numeric stats. See docs/DESIGN-SYSTEM.md.
+            './assets/fonts/BricolageGrotesque-Medium.ttf',
+            './assets/fonts/BricolageGrotesque-SemiBold.ttf',
+            './assets/fonts/BricolageGrotesque-Bold.ttf',
+            './assets/fonts/BricolageGrotesque-ExtraBold.ttf',
+            // Tabular numerals
             './assets/fonts/GeistMono-Regular.ttf',
           ],
         },

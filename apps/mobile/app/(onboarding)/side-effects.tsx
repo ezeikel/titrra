@@ -53,8 +53,8 @@ const SideEffectsStep = () => {
               onPress={() => toggle(o.type)}
               className={`rounded-full border px-4 py-2.5 ${
                 selected
-                  ? 'border-teal bg-teal'
-                  : 'border-border bg-sand active:bg-mist'
+                  ? 'border-teal bg-accent'
+                  : 'border-border bg-paper active:bg-mist'
               }`}
             >
               <Text

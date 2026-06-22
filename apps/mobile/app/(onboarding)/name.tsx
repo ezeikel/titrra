@@ -22,14 +22,14 @@ const NameStep = () => {
         value={data.name}
         onChangeText={(t) => set({ name: t })}
         placeholder="Your name"
-        placeholderTextColor="#9aa8a6"
+        placeholderTextColor="#93a09d"
         autoFocus
         autoCapitalize="words"
         returnKeyType="next"
         onSubmitEditing={() => {
           if (data.name.trim()) router.push('/(onboarding)/medication');
         }}
-        className="h-14 rounded-2xl border border-border bg-sand px-4 font-sans-bold text-[20px] text-ink"
+        className="h-14 rounded-2xl border-2 border-border bg-paper px-4 font-sans-bold text-[20px] text-ink"
       />
     </OnboardingStep>
   );

@@ -1,28 +1,54 @@
 @import "tailwindcss";
 @import "nativewind/theme";
 
-/* Titrra design tokens — mirrors the web app/globals.css. Calm, clinical,
- * premium: teal primary, soft sand surfaces. */
+/* Titrra design tokens — v2 "premium-health" (see docs/DESIGN-SYSTEM.md).
+ * Warm light surfaces, a deeper teal anchor, real elevation, and a muted
+ * semantic palette for health states. Display = Bricolage Grotesque, body =
+ * Inter. Token NAMES are stable so screens don't break; values refined.
+ * Kept dark-mode-friendly (screens reference tokens, not raw hex). */
 @theme {
-  /* Fonts (PostScript names registered via the expo-font config plugin) */
+  /* ── Fonts (PostScript names registered via the expo-font plugin) ──────── */
+  /* Body / UI */
   --font-sans: "Inter-Regular";
   --font-sans-medium: "Inter-Medium";
   --font-sans-semibold: "Inter-SemiBold";
   --font-sans-bold: "Inter-Bold";
+  /* Display — headings + big numeric stats */
+  --font-display: "BricolageGrotesque-Medium";
+  --font-display-semibold: "BricolageGrotesque-SemiBold";
+  --font-display-bold: "BricolageGrotesque-Bold";
+  --font-display-black: "BricolageGrotesque-ExtraBold";
+  /* Tabular numerals for stat readouts */
   --font-mono: "GeistMono-Regular";
 
-  /* Brand palette */
-  --color-teal: #0d9488;
-  --color-teal-deep: #0f766e;
-  --color-sand: #faf8f3;
-  --color-ink: #0e1a1a;
-  --color-mist: #eef2f1;
-  --color-paper: #ffffff;
+  /* ── Brand (teal anchor, deeper + richer) ─────────────────────────────── */
+  --color-teal: #0e7c7b; /* primary action — deeper, less neon */
+  --color-teal-deep: #0a5f5e; /* pressed / accents */
+  --color-teal-soft: #5eb8b3; /* lighter teal for secondary fills */
+  --color-teal-tint: #e2f1ef; /* very light teal wash (selected bg) */
 
-  /* Data / status */
-  --color-success: #16a34a;
-  --color-warn: #d97706;
-  --color-destructive: #dc2626;
-  --color-muted: #5a6b69;
-  --color-border: #e2e8e6;
+  /* ── Surfaces (warm, two-level so cards separate from bg) ──────────────── */
+  --color-sand: #f7f4ed; /* app background — warm off-white */
+  --color-paper: #ffffff; /* elevated card surface */
+  --color-card: #fffdf9; /* secondary card — warm white, distinct */
+  --color-mist: #eceae3; /* subtle fill / pressed rows */
+  --color-accent: #e2f1ef; /* teal-tint accent (WAS undefined — fixed) */
+
+  /* ── Text ──────────────────────────────────────────────────────────────── */
+  --color-ink: #14201f; /* primary text — near-black, warm */
+  --color-muted: #5f706e; /* secondary text */
+  --color-faint: #93a09d; /* tertiary / placeholders */
+  --color-border: #e6e2d8; /* hairline borders, warm */
+
+  /* ── Semantic health states (muted, not loud) ─────────────────────────── */
+  --color-success: #2f9e6f; /* good / stable / on-track */
+  --color-warn: #c98a2b; /* caution / overuse */
+  --color-destructive: #cf5a4e; /* alert / error (softened red) */
+  --color-info: #4a7fb0; /* neutral data */
+
+  /* ── Radii (larger, softer) ───────────────────────────────────────────── */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
 }

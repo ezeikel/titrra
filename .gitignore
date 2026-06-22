@@ -61,3 +61,4 @@ google-service-account.json
 
 # Local-only Vercel env dump (secrets) — push to Vercel via CLI, never commit
 vercel-env.production.txt
+docs/redesign-compare/

@@ -8,40 +8,26 @@ import {
   View,
 } from 'react-native';
 import type { PurchasesPackage } from 'react-native-purchases';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withDelay,
+  withTiming,
+} from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
+import { PaywallHero } from '@/components/paywall/PaywallHero';
+import { PlanRow } from '@/components/paywall/PlanRow';
+import { TrustStrip } from '@/components/paywall/TrustStrip';
 import { useOnboarding } from '@/contexts/onboarding';
 import { usePurchases } from '@/contexts/purchases';
 import { trackEvent } from '@/lib/analytics';
-
-const PERKS = [
-  'Titration ladder + step-up reminders',
-  'Medication-level curve between doses',
-  'Full weight × dose × side-effect timeline',
-  'Export a PDF for your provider',
-  'Protein & water goals',
-  'Apple Health sync',
-];
-
-const TIMELINE = [
-  {
-    icon: 'chevron-right',
-    title: 'Today',
-    body: 'Unlock your full plan instantly.',
-  },
-  {
-    icon: 'chevron-right',
-    title: 'Day 5',
-    body: "We'll remind you before your trial ends.",
-  },
-  {
-    icon: 'chevron-right',
-    title: 'Day 7',
-    body: 'Your subscription starts. Cancel anytime before.',
-  },
-] as const;
+import { elevation } from '@/lib/elevation';
+import { TIMING_RISE } from '@/lib/motion';
+import { PAYWALL_PERKS, PAYWALL_TIMELINE } from '@/lib/paywall';
 
 type PlanKey = 'annual' | 'monthly' | 'lifetime';
 
@@ -54,13 +40,28 @@ const Paywall = () => {
   const insets = useSafeAreaInsets();
   const { monthly, annual, lifetime, purchase, restore, ready, error, retry } =
     usePurchases();
-  const { onboarded, markOnboarded } = useOnboarding();
+  const { data, onboarded, markOnboarded } = useOnboarding();
   const [selected, setSelected] = useState<PlanKey>('annual');
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     trackEvent('paywall_viewed', { offering: 'default' });
   }, []);
+
+  // Body fade + rise after the hero springs in.
+  const bodyOpacity = useSharedValue(0);
+  const bodyY = useSharedValue(18);
+  useEffect(() => {
+    bodyOpacity.value = withDelay(220, withTiming(1, TIMING_RISE));
+    bodyY.value = withDelay(
+      220,
+      withTiming(0, { ...TIMING_RISE, easing: Easing.out(Easing.cubic) }),
+    );
+  }, [bodyOpacity, bodyY]);
+  const bodyStyle = useAnimatedStyle(() => ({
+    opacity: bodyOpacity.value,
+    transform: [{ translateY: bodyY.value }],
+  }));
 
   const pkgFor = (key: PlanKey): PurchasesPackage | null =>
     key === 'annual' ? annual : key === 'monthly' ? monthly : lifetime;
@@ -132,123 +133,123 @@ const Paywall = () => {
         ? 'Unlock lifetime'
         : 'Subscribe monthly';
 
-  const PlanRow = ({
-    plan,
-    title,
-    price,
-    note,
-    badge,
-  }: {
-    plan: PlanKey;
-    title: string;
-    price: string;
-    note?: string;
-    badge?: string;
-  }) => {
-    const active = selected === plan;
-    return (
-      <Pressable
-        onPress={() => setSelected(plan)}
-        accessibilityRole="radio"
-        accessibilityState={{ selected: active }}
-        accessibilityLabel={`${title} plan, ${price}${note ? `, ${note}` : ''}`}
-        className={`flex-row items-center justify-between rounded-2xl border-2 px-5 py-4 ${
-          active ? 'border-teal bg-accent' : 'border-border bg-paper'
-        }`}
-      >
-        <View className="flex-1">
-          <View className="flex-row items-center gap-2">
-            <Text className="font-sans-bold text-[16px] text-ink">{title}</Text>
-            {badge ? (
-              <View className="rounded-full bg-teal px-2 py-0.5">
-                <Text className="font-sans-bold text-[9px] uppercase tracking-[1px] text-paper">
-                  {badge}
-                </Text>
-              </View>
-            ) : null}
-          </View>
-          {note ? (
-            <Text className="mt-0.5 font-sans text-[12px] text-muted">
-              {note}
-            </Text>
-          ) : null}
-        </View>
-        <Text className="font-sans-bold text-[15px] text-ink">{price}</Text>
-      </Pressable>
-    );
-  };
-
   return (
     <View className="flex-1 bg-sand">
+      {/* Top-right close — mirrors the dismiss CTA */}
+      <View
+        style={{ paddingTop: insets.top + 6 }}
+        className="absolute right-5 z-10"
+      >
+        <Pressable
+          onPress={dismiss}
+          hitSlop={14}
+          disabled={busy}
+          accessibilityRole="button"
+          accessibilityLabel="Close"
+          className="size-9 items-center justify-center rounded-full bg-paper"
+          style={elevation.card}
+        >
+          <Icon icon="xmark" size={16} color="#5f706e" />
+        </Pressable>
+      </View>
+
       <ScrollView
         contentContainerStyle={{
-          paddingTop: insets.top + 20,
+          paddingTop: insets.top + 16,
           paddingHorizontal: 24,
           paddingBottom: 16,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Text className="font-sans-bold text-[11px] uppercase tracking-[3px] text-teal-deep">
-          Titrra Pro
-        </Text>
-        <Text className="mt-3 font-sans-bold text-[28px] leading-[32px] text-ink">
-          Your whole journey, on one timeline.
-        </Text>
+        {/* Hero — the titration ladder fan */}
+        <PaywallHero currentDose={data.currentDose} goalDose={data.goalDose} />
 
-        <View className="mt-5 gap-1.5">
-          {PERKS.map((perk) => (
-            <View key={perk} className="flex-row items-center gap-2">
-              <Icon icon="chevron-right" size={13} color="#0d9488" />
-              <Text className="font-sans text-[14px] text-ink">{perk}</Text>
-            </View>
-          ))}
-        </View>
+        <Animated.View style={bodyStyle}>
+          <Text className="mt-4 text-center font-sans-bold text-[11px] uppercase tracking-[3px] text-teal">
+            Titrra Pro
+          </Text>
+          <Text className="mt-2 text-center font-display-bold text-[28px] leading-[33px] text-ink">
+            Your whole journey, on one timeline.
+          </Text>
 
-        {/* Trial timeline */}
-        <View className="mt-6 rounded-2xl border border-border bg-paper p-5">
-          {TIMELINE.map((t, i) => (
-            <View key={t.title} className="flex-row gap-3">
-              <View className="items-center">
-                <View className="size-7 items-center justify-center rounded-full bg-accent">
-                  <Icon icon="chevron-right" size={13} color="#0f766e" />
+          {/* Trust */}
+          <View className="mt-4">
+            <TrustStrip />
+          </View>
+
+          {/* Perks card */}
+          <View
+            className="mt-6 rounded-3xl bg-paper p-5"
+            style={elevation.card}
+          >
+            <View className="gap-2.5">
+              {PAYWALL_PERKS.map((perk) => (
+                <View key={perk} className="flex-row items-center gap-2.5">
+                  <View className="size-5 items-center justify-center rounded-full bg-accent">
+                    <Icon icon="check" size={11} color="#0e7c7b" />
+                  </View>
+                  <Text className="flex-1 font-sans text-[14px] text-ink">
+                    {perk}
+                  </Text>
                 </View>
-                {i < TIMELINE.length - 1 ? (
-                  <View className="my-1 w-[2px] flex-1 bg-border" />
-                ) : null}
-              </View>
-              <View className={i < TIMELINE.length - 1 ? 'pb-4' : ''}>
-                <Text className="font-sans-bold text-[14px] text-ink">
-                  {t.title}
-                </Text>
-                <Text className="mt-0.5 font-sans text-[13px] text-muted">
-                  {t.body}
-                </Text>
-              </View>
+              ))}
             </View>
-          ))}
-        </View>
+          </View>
 
-        {/* Plans */}
-        <View className="mt-6 gap-3">
-          <PlanRow
-            plan="annual"
-            title="Annual"
-            price={priceLabel('annual', '$39.99/yr')}
-            note="3-day free trial, then billed yearly"
-            badge="Best value"
-          />
-          <PlanRow
-            plan="monthly"
-            title="Monthly"
-            price={priceLabel('monthly', '$7.99/mo')}
-          />
-          <PlanRow
-            plan="lifetime"
-            title="Lifetime"
-            price={priceLabel('lifetime', '$59.99')}
-            note="One payment, yours forever"
-          />
-        </View>
+          {/* Trial timeline */}
+          <View
+            className="mt-4 rounded-3xl bg-paper p-5"
+            style={elevation.card}
+          >
+            {PAYWALL_TIMELINE.map((t, i) => (
+              <View key={t.title} className="flex-row gap-3">
+                <View className="items-center">
+                  <View className="size-7 items-center justify-center rounded-full bg-accent">
+                    <Text className="font-sans-bold text-[11px] text-teal-deep">
+                      {i + 1}
+                    </Text>
+                  </View>
+                  {i < PAYWALL_TIMELINE.length - 1 ? (
+                    <View className="my-1 w-[2px] flex-1 bg-border" />
+                  ) : null}
+                </View>
+                <View className={i < PAYWALL_TIMELINE.length - 1 ? 'pb-4' : ''}>
+                  <Text className="font-sans-bold text-[14px] text-ink">
+                    {t.title}
+                  </Text>
+                  <Text className="mt-0.5 font-sans text-[13px] text-muted">
+                    {t.body}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+
+          {/* Plans */}
+          <View className="mt-5 gap-3">
+            <PlanRow
+              title="Annual"
+              price={priceLabel('annual', '$39.99/yr')}
+              note="3-day free trial, then billed yearly"
+              badge="Best value"
+              selected={selected === 'annual'}
+              onPress={() => setSelected('annual')}
+            />
+            <PlanRow
+              title="Monthly"
+              price={priceLabel('monthly', '$7.99/mo')}
+              selected={selected === 'monthly'}
+              onPress={() => setSelected('monthly')}
+            />
+            <PlanRow
+              title="Lifetime"
+              price={priceLabel('lifetime', '$59.99')}
+              note="One payment, yours forever"
+              selected={selected === 'lifetime'}
+              onPress={() => setSelected('lifetime')}
+            />
+          </View>
+        </Animated.View>
       </ScrollView>
 
       {/* Sticky CTA */}
@@ -287,6 +288,18 @@ const Paywall = () => {
             </Text>
           </Pressable>
         )}
+
+        {/* Microcopy + auto-renew compliance line */}
+        <Text className="mt-2.5 text-center font-sans text-[11px] leading-[15px] text-faint">
+          {selected === 'annual'
+            ? `3-day free trial, then ${priceLabel('annual', '$39.99')}/yr. `
+            : selected === 'lifetime'
+              ? 'One payment, yours forever. '
+              : `${priceLabel('monthly', '$7.99')}/mo. `}
+          Cancel anytime in Settings. For tracking and education only — not
+          medical advice.
+        </Text>
+
         <View className="mt-2 flex-row items-center justify-center gap-6">
           <Pressable
             onPress={onRestore}

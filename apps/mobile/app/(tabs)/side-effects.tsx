@@ -16,6 +16,7 @@ import {
   type SideEffectRecord,
   type SideEffectType,
 } from '@/lib/api';
+import { elevation } from '@/lib/elevation';
 
 const TYPES: { type: SideEffectType; label: string }[] = [
   { type: 'NAUSEA', label: 'Nausea' },
@@ -101,7 +102,7 @@ const SideEffects = () => {
     >
       {loading ? (
         <View className="items-center py-16">
-          <ActivityIndicator color="#0d9488" />
+          <ActivityIndicator color="#0e7c7b" />
           <Text className="mt-3 font-sans text-[13px] text-muted">
             Loading your logs…
           </Text>
@@ -115,10 +116,10 @@ const SideEffects = () => {
           ) : null}
 
           {/* Type picker */}
-          <Text className="font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
+          <Text className="font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
             What are you feeling?
           </Text>
-          <View className="mt-3 flex-row flex-wrap gap-2">
+          <View className="mt-3.5 flex-row flex-wrap gap-2.5">
             {TYPES.map((t) => {
               const selected = t.type === type;
               return (
@@ -128,15 +129,15 @@ const SideEffects = () => {
                   accessibilityRole="radio"
                   accessibilityState={{ selected }}
                   accessibilityLabel={t.label}
-                  className={`rounded-xl border px-4 py-3 ${
+                  className={`rounded-2xl border-2 px-4 py-3 ${
                     selected
-                      ? 'border-teal bg-teal'
-                      : 'border-border bg-sand active:bg-mist'
+                      ? 'border-teal bg-accent'
+                      : 'border-border bg-paper active:bg-mist'
                   }`}
                 >
                   <Text
                     className={`font-sans-semibold text-[14px] ${
-                      selected ? 'text-paper' : 'text-ink'
+                      selected ? 'text-teal-deep' : 'text-ink'
                     }`}
                   >
                     {t.label}
@@ -146,11 +147,11 @@ const SideEffects = () => {
             })}
           </View>
 
-          {/* Severity */}
-          <Text className="mt-7 font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
+          {/* Severity — segmented control */}
+          <Text className="mt-8 font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
             How severe?
           </Text>
-          <View className="mt-3 flex-row gap-2">
+          <View className="mt-3.5 flex-row gap-2">
             {[1, 2, 3, 4, 5].map((n) => {
               const selected = n === severity;
               return (
@@ -162,16 +163,18 @@ const SideEffects = () => {
                   accessibilityLabel={`Severity ${n}${
                     SEVERITY_LABELS[n - 1] ? `, ${SEVERITY_LABELS[n - 1]}` : ''
                   }`}
-                  className={`flex-1 items-center rounded-xl border py-3 ${
+                  style={selected ? elevation.card : undefined}
+                  className={`flex-1 items-center rounded-2xl border-2 py-3.5 ${
                     selected
                       ? 'border-teal bg-teal'
-                      : 'border-border bg-sand active:bg-mist'
+                      : 'border-border bg-paper active:bg-mist'
                   }`}
                 >
                   <Text
-                    className={`font-sans-bold text-[18px] ${
+                    className={`font-display-bold text-[18px] ${
                       selected ? 'text-paper' : 'text-ink'
                     }`}
+                    allowFontScaling={false}
                   >
                     {n}
                   </Text>
@@ -193,7 +196,7 @@ const SideEffects = () => {
             value={notes}
             onChangeText={setNotes}
             placeholder="Anything worth remembering…"
-            placeholderTextColor="#9aa8a6"
+            placeholderTextColor="#93a09d"
             multiline
             className="mt-3 min-h-[64px] rounded-xl border border-border bg-sand px-4 py-3 font-sans text-[15px] text-ink"
           />

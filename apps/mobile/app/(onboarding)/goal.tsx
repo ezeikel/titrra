@@ -48,15 +48,15 @@ const GoalStep = () => {
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               accessibilityLabel={`Goal dose ${d} milligrams`}
-              className={`rounded-xl border px-5 py-3 ${
+              className={`rounded-2xl border-2 px-5 py-3 ${
                 selected
-                  ? 'border-teal bg-teal'
-                  : 'border-border bg-sand active:bg-mist'
+                  ? 'border-teal bg-accent'
+                  : 'border-border bg-paper active:bg-mist'
               }`}
             >
               <Text
                 className={`font-sans-bold text-[16px] ${
-                  selected ? 'text-paper' : 'text-ink'
+                  selected ? 'text-teal-deep' : 'text-ink'
                 }`}
               >
                 {d} mg

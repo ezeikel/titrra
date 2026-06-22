@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { usePurchases } from '@/contexts/purchases';
 import { trackEvent } from '@/lib/analytics';
+import { elevation } from '@/lib/elevation';
 
 const Row = ({
   label,
@@ -13,6 +14,7 @@ const Row = ({
   comingSoon,
   destructive,
   loading,
+  first,
 }: {
   label: string;
   onPress: () => void;
@@ -22,6 +24,8 @@ const Row = ({
   destructive?: boolean;
   /** Show a spinner + disable while an async action is in flight. */
   loading?: boolean;
+  /** First row in a card group — omits the top hairline divider. */
+  first?: boolean;
 }) => (
   <Pressable
     onPress={comingSoon || loading ? undefined : onPress}
@@ -29,19 +33,19 @@ const Row = ({
     accessibilityRole="button"
     accessibilityState={{ disabled: comingSoon || loading, busy: loading }}
     accessibilityLabel={comingSoon ? `${label}, coming soon` : label}
-    className={`flex-row items-center justify-between border-b border-border py-4 ${
-      comingSoon ? 'opacity-50' : 'active:opacity-70'
-    }`}
+    className={`flex-row items-center justify-between px-4 py-4 ${
+      first ? '' : 'border-t border-border'
+    } ${comingSoon ? 'opacity-50' : 'active:bg-mist'}`}
   >
     <Text
-      className={`font-sans-medium text-[15px] ${
+      className={`font-sans-semibold text-[15px] ${
         destructive ? 'text-destructive' : 'text-ink'
       }`}
     >
       {label}
     </Text>
     {loading ? (
-      <ActivityIndicator size="small" color="#5a6b69" />
+      <ActivityIndicator size="small" color="#5f706e" />
     ) : comingSoon ? (
       <View className="rounded-full bg-mist px-2.5 py-1">
         <Text className="font-sans-bold text-[10px] uppercase tracking-[1px] text-muted">
@@ -49,7 +53,7 @@ const Row = ({
         </Text>
       </View>
     ) : (
-      <Icon icon="chevron-right" size={14} color="#5a6b69" />
+      <Icon icon="chevron-right" size={14} color="#93a09d" />
     )}
   </Pressable>
 );
@@ -83,11 +87,19 @@ const Settings = () => {
           : 'Manage your plan, reminders and units.'
       }
     >
-      <View>
+      <View
+        className="overflow-hidden rounded-3xl bg-paper"
+        style={elevation.card}
+      >
         {!isPro ? (
-          <Row label="Upgrade to Pro" onPress={() => router.push('/paywall')} />
+          <Row
+            first
+            label="Upgrade to Pro"
+            onPress={() => router.push('/paywall')}
+          />
         ) : null}
         <Row
+          first={isPro}
           label={restoring ? 'Restoring…' : 'Restore purchases'}
           loading={restoring}
           onPress={onRestore}

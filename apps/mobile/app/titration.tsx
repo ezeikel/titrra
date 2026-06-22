@@ -17,6 +17,7 @@ import {
   startStep as startStepApi,
   type TitrationStepRecord,
 } from '@/lib/api';
+import { elevation } from '@/lib/elevation';
 
 // Common GLP-1 ladder rungs to quick-add (mg). Covers the standard
 // semaglutide and tirzepatide escalation doses.
@@ -92,9 +93,9 @@ const TitrationLadderContent = () => {
 
   return (
     <ScrollView
-      className="flex-1 bg-paper"
+      className="flex-1 bg-sand"
       contentContainerStyle={{
-        paddingHorizontal: 20,
+        paddingHorizontal: 22,
         paddingTop: 20,
         paddingBottom: insets.bottom + 32,
       }}
@@ -107,7 +108,7 @@ const TitrationLadderContent = () => {
 
       {loading ? (
         <View className="items-center py-16">
-          <ActivityIndicator color="#0d9488" />
+          <ActivityIndicator color="#0e7c7b" />
           <Text className="mt-3 font-sans text-[13px] text-muted">
             Loading your ladder…
           </Text>
@@ -123,8 +124,11 @@ const TitrationLadderContent = () => {
           {/* The ladder. On a load error we hide the empty/add UI so a failed
               fetch doesn't masquerade as "you have no rungs". */}
           {error ? null : steps.length === 0 ? (
-            <View className="mt-6 rounded-2xl border border-border bg-sand p-6">
-              <Text className="font-sans-semibold text-[15px] text-ink">
+            <View
+              className="mt-6 rounded-3xl bg-paper p-6"
+              style={elevation.card}
+            >
+              <Text className="font-display-semibold text-[17px] text-ink">
                 No rungs yet
               </Text>
               <Text className="mt-2 font-sans text-[13px] leading-[19px] text-muted">
@@ -151,46 +155,54 @@ const TitrationLadderContent = () => {
                     {/* Rail + node */}
                     <View className="items-center">
                       <View
-                        className={`size-9 items-center justify-center rounded-full ${
+                        className={`size-10 items-center justify-center rounded-full ${
                           isCurrent
                             ? 'bg-teal'
                             : isDone
                               ? 'bg-teal-deep'
-                              : 'border border-border bg-sand'
+                              : 'border-2 border-border bg-paper'
                         }`}
+                        style={isCurrent ? elevation.card : undefined}
                       >
                         {isDone ? (
-                          <Icon
-                            icon="chevron-right"
-                            size={14}
-                            color="#faf8f3"
-                          />
+                          <Icon icon="check" size={15} color="#faf8f3" />
                         ) : (
                           <Text
-                            className={`font-sans-bold text-[13px] ${
-                              isCurrent ? 'text-paper' : 'text-muted'
+                            className={`font-display-bold text-[14px] ${
+                              isCurrent ? 'text-paper' : 'text-faint'
                             }`}
+                            allowFontScaling={false}
                           >
                             {i + 1}
                           </Text>
                         )}
                       </View>
                       {!last ? (
-                        <View className="my-1 w-[2px] flex-1 bg-border" />
+                        <View
+                          className={`my-1 w-[2px] flex-1 ${
+                            isDone ? 'bg-teal-deep' : 'bg-border'
+                          }`}
+                        />
                       ) : null}
                     </View>
 
                     {/* Rung card */}
-                    <View className="ml-3 flex-1 pb-4">
+                    <View className="ml-3.5 flex-1 pb-4">
                       <View
-                        className={`rounded-2xl border p-4 ${
+                        className={`rounded-2xl p-4 ${
                           isCurrent
-                            ? 'border-teal bg-accent'
-                            : 'border-border bg-sand'
+                            ? 'border-2 border-teal bg-accent'
+                            : 'bg-paper'
                         }`}
+                        style={elevation.card}
                       >
                         <View className="flex-row items-center justify-between">
-                          <Text className="font-sans-bold text-[20px] text-ink">
+                          <Text
+                            className={`font-display-bold text-[22px] ${
+                              isUpcoming && !isNext ? 'text-faint' : 'text-ink'
+                            }`}
+                            allowFontScaling={false}
+                          >
                             {step.doseMg} mg
                           </Text>
                           {isCurrent ? (
@@ -200,7 +212,7 @@ const TitrationLadderContent = () => {
                               </Text>
                             </View>
                           ) : isDone ? (
-                            <Text className="font-sans text-[11px] uppercase tracking-[1px] text-teal-deep">
+                            <Text className="font-sans-bold text-[11px] uppercase tracking-[1px] text-teal-deep">
                               Completed
                             </Text>
                           ) : null}
@@ -217,14 +229,14 @@ const TitrationLadderContent = () => {
                                 ? `Mark ${step.doseMg} milligram rung as started`
                                 : `${step.doseMg} milligram rung, upcoming`
                             }
-                            className={`mt-3 items-center rounded-xl px-4 py-2.5 ${
+                            className={`mt-3 items-center rounded-xl px-4 py-3 ${
                               isNext
                                 ? 'bg-teal active:bg-teal-deep'
                                 : 'bg-mist opacity-50'
                             }`}
                           >
                             <Text
-                              className={`font-sans-semibold text-[13px] ${
+                              className={`font-sans-bold text-[13px] uppercase tracking-[1px] ${
                                 isNext ? 'text-paper' : 'text-muted'
                               }`}
                             >
@@ -242,8 +254,8 @@ const TitrationLadderContent = () => {
 
           {/* Provider-consult prompt — part of the ladder UI, hidden on error. */}
           {error ? null : (
-            <View className="mt-2 flex-row items-start gap-2 rounded-xl border border-warn/40 bg-warn/10 p-4">
-              <Icon icon="heart-pulse" size={16} color="#d97706" />
+            <View className="mt-2 flex-row items-start gap-2.5 rounded-2xl border border-warn/40 bg-warn/10 p-4">
+              <Icon icon="heart-pulse" size={16} color="#c98a2b" />
               <Text className="flex-1 font-sans text-[12px] leading-[17px] text-ink">
                 Only step up when your healthcare provider tells you to. Titrra
                 tracks your plan — it never recommends a dose change.
@@ -255,10 +267,10 @@ const TitrationLadderContent = () => {
               imply the feature is broken (retry from the error card instead). */}
           {error ? null : (
             <>
-              <Text className="mt-8 font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
+              <Text className="mt-8 font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
                 Add a rung
               </Text>
-              <View className="mt-3 flex-row flex-wrap gap-2">
+              <View className="mt-3.5 flex-row flex-wrap gap-2.5">
                 {RUNG_OPTIONS.map((d) => {
                   const selected = d === newDose;
                   return (
@@ -268,15 +280,15 @@ const TitrationLadderContent = () => {
                       accessibilityRole="radio"
                       accessibilityState={{ selected }}
                       accessibilityLabel={`Add ${d} milligram rung`}
-                      className={`rounded-xl border px-4 py-2.5 ${
+                      className={`rounded-2xl border-2 px-4 py-2.5 ${
                         selected
-                          ? 'border-teal bg-teal'
-                          : 'border-border bg-sand active:bg-mist'
+                          ? 'border-teal bg-accent'
+                          : 'border-border bg-paper active:bg-mist'
                       }`}
                     >
                       <Text
                         className={`font-sans-semibold text-[14px] ${
-                          selected ? 'text-paper' : 'text-ink'
+                          selected ? 'text-teal-deep' : 'text-ink'
                         }`}
                       >
                         {d} mg
@@ -296,7 +308,8 @@ const TitrationLadderContent = () => {
                     ? `Add ${newDose} milligram rung`
                     : 'Pick a dose'
                 }
-                className={`mt-5 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
+                style={newDose == null || busy ? undefined : elevation.card}
+                className={`mt-6 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
                   newDose == null || busy
                     ? 'bg-teal/50'
                     : 'bg-teal active:bg-teal-deep'

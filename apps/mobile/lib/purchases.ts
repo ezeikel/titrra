@@ -1,8 +1,4 @@
-import {
-  DEFAULT_OFFERING,
-  PRO_ENTITLEMENT,
-  PRO_PACKAGES,
-} from '@titrra/types';
+import { DEFAULT_OFFERING, PRO_ENTITLEMENT, PRO_PACKAGES } from '@titrra/types';
 import { Platform } from 'react-native';
 import Purchases, {
   type CustomerInfo,

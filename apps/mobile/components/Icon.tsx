@@ -4,13 +4,21 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
   faChartLine,
+  faCheck,
+  faChevronDown,
   faChevronLeft,
   faChevronRight,
+  faChevronUp,
   faGear,
   faHeartPulse,
+  faMinus,
+  faPlus,
+  faShieldHalved,
+  faStar,
   faSyringe,
   faTriangleExclamation,
   faWeightScale,
+  faXmark,
 } from '@fortawesome/pro-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import type { ColorValue } from 'react-native';
@@ -24,6 +32,14 @@ const ICONS = {
   'heart-pulse': faHeartPulse,
   'chevron-right': faChevronRight,
   'chevron-left': faChevronLeft,
+  'chevron-up': faChevronUp,
+  'chevron-down': faChevronDown,
+  plus: faPlus,
+  minus: faMinus,
+  check: faCheck,
+  star: faStar,
+  'shield-halved': faShieldHalved,
+  xmark: faXmark,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

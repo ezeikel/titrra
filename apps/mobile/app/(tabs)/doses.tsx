@@ -7,6 +7,7 @@ import { Icon } from '@/components/Icon';
 import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { type DoseRecord, listDoses } from '@/lib/api';
+import { elevation } from '@/lib/elevation';
 import { type InjectionSite, SITE_LABELS } from '@/lib/rotation';
 
 // Human "3 May", "Yesterday", "Today" for a dose timeline row.
@@ -56,7 +57,8 @@ const Doses = () => {
         onPress={() => router.push('/titration')}
         accessibilityRole="button"
         accessibilityLabel="Open titration ladder"
-        className="flex-row items-center justify-between rounded-2xl border border-border bg-sand p-4 active:bg-mist"
+        className="flex-row items-center justify-between rounded-2xl bg-paper p-4 active:opacity-90"
+        style={elevation.card}
       >
         <View className="flex-1">
           <View className="flex-row items-center gap-2">
@@ -69,18 +71,18 @@ const Doses = () => {
             Your planned dose schedule and where you are on it.
           </Text>
         </View>
-        <Icon icon="chevron-right" size={16} color="#5a6b69" />
+        <Icon icon="chevron-right" size={16} color="#93a09d" />
       </Pressable>
 
       {/* Timeline */}
-      <View className="mt-7">
-        <Text className="font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
+      <View className="mt-8">
+        <Text className="font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
           Dose history
         </Text>
 
         {loading ? (
           <View className="items-center py-16">
-            <ActivityIndicator color="#0d9488" />
+            <ActivityIndicator color="#0e7c7b" />
             <Text className="mt-3 font-sans text-[13px] text-muted">
               Loading your doses…
             </Text>
@@ -98,18 +100,19 @@ const Doses = () => {
             />
           </View>
         ) : (
-          <View className="mt-3 gap-2">
+          <View className="mt-3.5 gap-2.5">
             {doses.map((d) => (
               <View
                 key={d.id}
-                className="flex-row items-center justify-between rounded-xl border border-border bg-sand px-4 py-3.5"
+                className="flex-row items-center justify-between rounded-2xl bg-paper px-4 py-3.5"
+                style={elevation.card}
               >
                 <View className="flex-row items-center gap-3">
-                  <View className="size-9 items-center justify-center rounded-full bg-accent">
-                    <Icon icon="syringe" size={15} color="#0d9488" />
+                  <View className="size-9 items-center justify-center rounded-xl bg-accent">
+                    <Icon icon="syringe" size={15} color="#0e7c7b" />
                   </View>
                   <View>
-                    <Text className="font-sans-semibold text-[15px] text-ink">
+                    <Text className="font-sans-bold text-[15px] text-ink">
                       {d.doseMg} mg
                     </Text>
                     {d.injectionSite ? (
@@ -119,7 +122,7 @@ const Doses = () => {
                     ) : null}
                   </View>
                 </View>
-                <Text className="font-sans text-[12px] text-muted">
+                <Text className="font-sans text-[12px] text-faint">
                   {formatDay(d.takenAt)}
                 </Text>
               </View>

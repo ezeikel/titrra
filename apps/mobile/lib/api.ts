@@ -182,6 +182,9 @@ export type MedicationRecord = {
   scheduleType: ScheduleType;
 };
 
+export const getMedication = (): Promise<{ medication: MedicationRecord }> =>
+  request('/api/medication', { method: 'GET' });
+
 export const updateMedication = (input: {
   drug?: Drug;
   form?: MedicationForm;

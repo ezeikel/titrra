@@ -1,4 +1,5 @@
 import { Pressable, Text, View } from 'react-native';
+import { elevation } from '@/lib/elevation';
 
 type ChoiceCardProps = {
   label: string;
@@ -19,10 +20,11 @@ export const ChoiceCard = ({
     accessibilityRole="radio"
     accessibilityState={{ selected }}
     accessibilityLabel={sublabel ? `${label}, ${sublabel}` : label}
-    className={`mb-3 flex-row items-center justify-between rounded-2xl border px-5 py-4 ${
+    style={elevation.card}
+    className={`mb-3 flex-row items-center justify-between rounded-2xl border-2 px-5 py-4 ${
       selected
         ? 'border-teal bg-accent'
-        : 'border-border bg-sand active:bg-mist'
+        : 'border-border bg-paper active:bg-mist'
     }`}
   >
     <View className="flex-1 pr-3">

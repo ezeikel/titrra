@@ -76,7 +76,7 @@ const RevealStep = () => {
         {/* Recap cards */}
         <View className="mt-7 gap-3">
           {meta ? (
-            <View className="rounded-2xl border border-border bg-sand p-5">
+            <View className="rounded-2xl border border-border bg-paper p-5">
               <Text className="font-sans-bold text-[11px] uppercase tracking-[2px] text-teal-deep">
                 Your medication
               </Text>
@@ -91,7 +91,7 @@ const RevealStep = () => {
           ) : null}
 
           {ladder.length > 0 ? (
-            <View className="rounded-2xl border border-border bg-sand p-5">
+            <View className="rounded-2xl border border-border bg-paper p-5">
               <Text className="font-sans-bold text-[11px] uppercase tracking-[2px] text-teal-deep">
                 Your titration ladder
               </Text>
@@ -127,7 +127,7 @@ const RevealStep = () => {
           ) : null}
 
           {data.currentWeight != null ? (
-            <View className="rounded-2xl border border-border bg-sand p-5">
+            <View className="rounded-2xl border border-border bg-paper p-5">
               <Text className="font-sans-bold text-[11px] uppercase tracking-[2px] text-teal-deep">
                 Starting weight
               </Text>

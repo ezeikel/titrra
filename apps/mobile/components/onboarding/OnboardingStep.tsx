@@ -46,9 +46,11 @@ export const OnboardingStep = ({
             <Pressable
               onPress={() => router.back()}
               hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
               className="size-9 items-center justify-center"
             >
-              <Icon icon="chevron-right" size={18} color="#5a6b69" />
+              <Icon icon="chevron-left" size={18} color="#5a6b69" />
             </Pressable>
           ) : (
             <View className="size-9" />
@@ -61,7 +63,12 @@ export const OnboardingStep = ({
             <View />
           )}
           {onSkip ? (
-            <Pressable onPress={onSkip} hitSlop={12}>
+            <Pressable
+              onPress={onSkip}
+              hitSlop={12}
+              accessibilityRole="button"
+              accessibilityLabel="Skip this step"
+            >
               <Text className="font-sans-semibold text-[14px] text-muted">
                 Skip
               </Text>
@@ -100,6 +107,9 @@ export const OnboardingStep = ({
         <Pressable
           onPress={onContinue}
           disabled={!canContinue}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: !canContinue }}
+          accessibilityLabel={continueLabel}
           className={`items-center rounded-2xl px-6 py-4 ${
             canContinue ? 'bg-teal active:bg-teal-deep' : 'bg-teal/40'
           }`}

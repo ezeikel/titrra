@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
 import { ProGate } from '@/components/ProGate';
 import { trackEvent } from '@/lib/analytics';
@@ -100,27 +101,28 @@ const TitrationLadderContent = () => {
       showsVerticalScrollIndicator={false}
     >
       <Text className="font-sans text-[15px] leading-[22px] text-muted">
-        Your dose-escalation plan, one rung at a time. Mark a rung as started
+        Your planned dose schedule, one rung at a time. Mark a rung as started
         once your provider says it&apos;s time to step up.
       </Text>
 
       {loading ? (
         <View className="items-center py-16">
           <ActivityIndicator color="#0d9488" />
+          <Text className="mt-3 font-sans text-[13px] text-muted">
+            Loading your ladder…
+          </Text>
         </View>
       ) : (
         <>
           {error ? (
-            <View className="mt-4 flex-row items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
-              <Icon icon="triangle-exclamation" size={16} color="#dc2626" />
-              <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink">
-                {error}
-              </Text>
+            <View className="mt-4">
+              <ErrorRetry message={error} onRetry={load} retrying={busy} />
             </View>
           ) : null}
 
-          {/* The ladder */}
-          {steps.length === 0 ? (
+          {/* The ladder. On a load error we hide the empty/add UI so a failed
+              fetch doesn't masquerade as "you have no rungs". */}
+          {error ? null : steps.length === 0 ? (
             <View className="mt-6 rounded-2xl border border-border bg-sand p-6">
               <Text className="font-sans-semibold text-[15px] text-ink">
                 No rungs yet
@@ -208,8 +210,17 @@ const TitrationLadderContent = () => {
                           <Pressable
                             onPress={() => startStep(step)}
                             disabled={busy || !isNext}
+                            accessibilityRole="button"
+                            accessibilityState={{ disabled: busy || !isNext }}
+                            accessibilityLabel={
+                              isNext
+                                ? `Mark ${step.doseMg} milligram rung as started`
+                                : `${step.doseMg} milligram rung, upcoming`
+                            }
                             className={`mt-3 items-center rounded-xl px-4 py-2.5 ${
-                              isNext ? 'bg-teal active:bg-teal-deep' : 'bg-mist'
+                              isNext
+                                ? 'bg-teal active:bg-teal-deep'
+                                : 'bg-mist opacity-50'
                             }`}
                           >
                             <Text
@@ -229,58 +240,75 @@ const TitrationLadderContent = () => {
             </View>
           )}
 
-          {/* Provider-consult prompt */}
-          <View className="mt-2 flex-row items-start gap-2 rounded-xl border border-warn/40 bg-warn/10 p-4">
-            <Icon icon="heart-pulse" size={16} color="#d97706" />
-            <Text className="flex-1 font-sans text-[12px] leading-[17px] text-ink">
-              Only step up when your healthcare provider tells you to. Titrra
-              tracks your plan — it never recommends a dose change.
-            </Text>
-          </View>
+          {/* Provider-consult prompt — part of the ladder UI, hidden on error. */}
+          {error ? null : (
+            <View className="mt-2 flex-row items-start gap-2 rounded-xl border border-warn/40 bg-warn/10 p-4">
+              <Icon icon="heart-pulse" size={16} color="#d97706" />
+              <Text className="flex-1 font-sans text-[12px] leading-[17px] text-ink">
+                Only step up when your healthcare provider tells you to. Titrra
+                tracks your plan — it never recommends a dose change.
+              </Text>
+            </View>
+          )}
 
-          {/* Add a rung */}
-          <Text className="mt-8 font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
-            Add a rung
-          </Text>
-          <View className="mt-3 flex-row flex-wrap gap-2">
-            {RUNG_OPTIONS.map((d) => {
-              const selected = d === newDose;
-              return (
-                <Pressable
-                  key={d}
-                  onPress={() => setNewDose(d)}
-                  className={`rounded-xl border px-4 py-2.5 ${
-                    selected
-                      ? 'border-teal bg-teal'
-                      : 'border-border bg-sand active:bg-mist'
-                  }`}
-                >
-                  <Text
-                    className={`font-sans-semibold text-[14px] ${
-                      selected ? 'text-paper' : 'text-ink'
-                    }`}
-                  >
-                    {d} mg
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {/* Add a rung — hidden on a load error so the dead Add button doesn't
+              imply the feature is broken (retry from the error card instead). */}
+          {error ? null : (
+            <>
+              <Text className="mt-8 font-sans-semibold text-[13px] uppercase tracking-[2px] text-muted">
+                Add a rung
+              </Text>
+              <View className="mt-3 flex-row flex-wrap gap-2">
+                {RUNG_OPTIONS.map((d) => {
+                  const selected = d === newDose;
+                  return (
+                    <Pressable
+                      key={d}
+                      onPress={() => setNewDose(d)}
+                      accessibilityRole="radio"
+                      accessibilityState={{ selected }}
+                      accessibilityLabel={`Add ${d} milligram rung`}
+                      className={`rounded-xl border px-4 py-2.5 ${
+                        selected
+                          ? 'border-teal bg-teal'
+                          : 'border-border bg-sand active:bg-mist'
+                      }`}
+                    >
+                      <Text
+                        className={`font-sans-semibold text-[14px] ${
+                          selected ? 'text-paper' : 'text-ink'
+                        }`}
+                      >
+                        {d} mg
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
 
-          <Pressable
-            onPress={addStep}
-            disabled={newDose == null || busy}
-            className={`mt-5 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
-              newDose == null || busy
-                ? 'bg-teal/50'
-                : 'bg-teal active:bg-teal-deep'
-            }`}
-          >
-            {busy ? <ActivityIndicator color="#faf8f3" /> : null}
-            <Text className="font-sans-bold text-[15px] uppercase tracking-[1px] text-paper">
-              {newDose != null ? `Add ${newDose} mg rung` : 'Pick a dose'}
-            </Text>
-          </Pressable>
+              <Pressable
+                onPress={addStep}
+                disabled={newDose == null || busy}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: newDose == null || busy }}
+                accessibilityLabel={
+                  newDose != null
+                    ? `Add ${newDose} milligram rung`
+                    : 'Pick a dose'
+                }
+                className={`mt-5 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
+                  newDose == null || busy
+                    ? 'bg-teal/50'
+                    : 'bg-teal active:bg-teal-deep'
+                }`}
+              >
+                {busy ? <ActivityIndicator color="#faf8f3" /> : null}
+                <Text className="font-sans-bold text-[15px] uppercase tracking-[1px] text-paper">
+                  {newDose != null ? `Add ${newDose} mg rung` : 'Pick a dose'}
+                </Text>
+              </Pressable>
+            </>
+          )}
 
           <Text className="mt-8 font-sans text-[11px] leading-[16px] text-muted">
             For tracking and education only. Not medical advice. Titrra never
@@ -297,7 +325,7 @@ const TitrationLadder = () => (
   <ProGate
     feature="The titration ladder"
     perks={[
-      'Visualise your full dose-escalation plan',
+      'Visualise your full planned dose schedule',
       'Step-up reminders timed to your schedule',
       'See exactly where you are on your journey',
     ]}

@@ -4,6 +4,7 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
 import {
   faChartLine,
+  faChevronLeft,
   faChevronRight,
   faGear,
   faHeartPulse,
@@ -22,6 +23,7 @@ const ICONS = {
   gear: faGear,
   'heart-pulse': faHeartPulse,
   'chevron-right': faChevronRight,
+  'chevron-left': faChevronLeft,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

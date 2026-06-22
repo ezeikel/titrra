@@ -7,7 +7,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { trackEvent } from '@/lib/analytics';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const RemindersStep = () => {
   const router = useRouter();
@@ -66,6 +66,8 @@ const RemindersStep = () => {
           set({ remindersOptIn: false });
           next();
         }}
+        accessibilityRole="button"
+        accessibilityLabel="Skip reminders for now"
         className="mt-4 items-center py-2"
       >
         <Text className="font-sans-semibold text-[14px] text-muted">

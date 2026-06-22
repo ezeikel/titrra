@@ -16,6 +16,9 @@ export const ChoiceCard = ({
 }: ChoiceCardProps) => (
   <Pressable
     onPress={onPress}
+    accessibilityRole="radio"
+    accessibilityState={{ selected }}
+    accessibilityLabel={sublabel ? `${label}, ${sublabel}` : label}
     className={`mb-3 flex-row items-center justify-between rounded-2xl border px-5 py-4 ${
       selected
         ? 'border-teal bg-accent'

@@ -1,9 +1,16 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import type { PurchasesPackage } from 'react-native-purchases';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
 import { useOnboarding } from '@/contexts/onboarding';
 import { usePurchases } from '@/contexts/purchases';
@@ -45,7 +52,7 @@ type PlanKey = 'annual' | 'monthly' | 'lifetime';
 const Paywall = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { monthly, annual, lifetime, purchase, restore, ready } =
+  const { monthly, annual, lifetime, purchase, restore, ready, error, retry } =
     usePurchases();
   const { onboarded, markOnboarded } = useOnboarding();
   const [selected, setSelected] = useState<PlanKey>('annual');
@@ -73,12 +80,18 @@ const Paywall = () => {
     setBusy(true);
     trackEvent('purchase_started', { package: pkg.identifier });
     try {
-      const ok = await purchase(pkg);
-      if (ok) {
+      const result = await purchase(pkg);
+      if (result.ok) {
         trackEvent('purchase_completed', { package: pkg.identifier });
         toast.success('Welcome to Titrra Pro.');
         await finish();
         router.replace('/(tabs)');
+      } else if (result.cancelled) {
+        trackEvent('purchase_cancelled', { package: pkg.identifier });
+      } else {
+        // A real failure (network, store error) — tell the user so the button
+        // re-enabling doesn't read as a silent no-op.
+        toast.error('Purchase failed. Check your connection and try again.');
       }
     } finally {
       setBusy(false);
@@ -110,6 +123,15 @@ const Paywall = () => {
   const priceLabel = (key: PlanKey, fallback: string) =>
     pkgFor(key)?.product.priceString ?? fallback;
 
+  // Plan-specific CTA — "Continue" is ambiguous for monthly/lifetime (browse vs
+  // buy), so name the action.
+  const ctaLabel =
+    selected === 'annual'
+      ? 'Start free trial'
+      : selected === 'lifetime'
+        ? 'Unlock lifetime'
+        : 'Subscribe monthly';
+
   const PlanRow = ({
     plan,
     title,
@@ -127,6 +149,9 @@ const Paywall = () => {
     return (
       <Pressable
         onPress={() => setSelected(plan)}
+        accessibilityRole="radio"
+        accessibilityState={{ selected: active }}
+        accessibilityLabel={`${title} plan, ${price}${note ? `, ${note}` : ''}`}
         className={`flex-row items-center justify-between rounded-2xl border-2 px-5 py-4 ${
           active ? 'border-teal bg-accent' : 'border-border bg-paper'
         }`}
@@ -231,22 +256,56 @@ const Paywall = () => {
         style={{ paddingBottom: insets.bottom + 12 }}
         className="border-t border-border/60 bg-sand px-6 pt-3"
       >
-        <Pressable
-          onPress={buy}
-          disabled={busy || !ready}
-          className={`items-center rounded-2xl px-6 py-4 ${
-            busy || !ready ? 'bg-teal/50' : 'bg-teal active:bg-teal-deep'
-          }`}
-        >
-          <Text className="font-sans-bold text-[16px] uppercase tracking-[1px] text-paper">
-            {selected === 'annual' ? 'Start free trial' : 'Continue'}
-          </Text>
-        </Pressable>
+        {error ? (
+          // Bootstrap failed — show a retry instead of a permanently dead CTA.
+          <ErrorRetry
+            message="We couldn't load the plans. Check your connection and try again."
+            onRetry={retry}
+            retrying={!ready}
+          />
+        ) : !ready ? (
+          // Offerings still loading — say so rather than a greyed-out mystery.
+          <View className="flex-row items-center justify-center gap-2 rounded-2xl bg-teal/50 px-6 py-4">
+            <ActivityIndicator color="#faf8f3" />
+            <Text className="font-sans-bold text-[16px] uppercase tracking-[1px] text-paper">
+              Loading plans…
+            </Text>
+          </View>
+        ) : (
+          <Pressable
+            onPress={buy}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy }}
+            accessibilityLabel={ctaLabel}
+            className={`items-center rounded-2xl px-6 py-4 ${
+              busy ? 'bg-teal/50' : 'bg-teal active:bg-teal-deep'
+            }`}
+          >
+            <Text className="font-sans-bold text-[16px] uppercase tracking-[1px] text-paper">
+              {ctaLabel}
+            </Text>
+          </Pressable>
+        )}
         <View className="mt-2 flex-row items-center justify-center gap-6">
-          <Pressable onPress={onRestore} hitSlop={8} disabled={busy}>
+          <Pressable
+            onPress={onRestore}
+            hitSlop={16}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Restore previous purchases"
+            className="px-2 py-1"
+          >
             <Text className="font-sans text-[13px] text-muted">Restore</Text>
           </Pressable>
-          <Pressable onPress={dismiss} hitSlop={8} disabled={busy}>
+          <Pressable
+            onPress={dismiss}
+            hitSlop={16}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityLabel="Skip for now"
+            className="px-2 py-1"
+          >
             <Text className="font-sans text-[13px] text-muted">
               Maybe later
             </Text>

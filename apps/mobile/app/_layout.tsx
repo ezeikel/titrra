@@ -43,10 +43,15 @@ const RootNavigator = () => {
 
   useEffect(() => {
     if (onboarded === null) return; // flag still loading
-    const inOnboarding = segments[0] === '(onboarding)';
-    if (!onboarded && !inOnboarding) {
+    // The paywall is the final onboarding step (reveal → /paywall, which is a
+    // top-level route, not in the (onboarding) group). Treat it as part of the
+    // pre-onboarded flow so the gate doesn't bounce the user back to welcome
+    // before they ever see it.
+    const inOnboardingFlow =
+      segments[0] === '(onboarding)' || segments[0] === 'paywall';
+    if (!onboarded && !inOnboardingFlow) {
       router.replace('/(onboarding)');
-    } else if (onboarded && inOnboarding) {
+    } else if (onboarded && segments[0] === '(onboarding)') {
       router.replace('/(tabs)');
     }
   }, [onboarded, segments, router]);

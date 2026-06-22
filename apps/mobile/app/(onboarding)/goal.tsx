@@ -5,7 +5,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { getDrugMeta } from '@/lib/glp1';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const GoalStep = () => {
   const router = useRouter();
@@ -45,6 +45,9 @@ const GoalStep = () => {
             <Pressable
               key={d}
               onPress={() => set({ goalDose: d })}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={`Goal dose ${d} milligrams`}
               className={`rounded-xl border px-5 py-3 ${
                 selected
                   ? 'border-teal bg-teal'

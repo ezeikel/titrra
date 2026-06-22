@@ -6,7 +6,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Icon } from '@/components/Icon';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { trackEvent } from '@/lib/analytics';
 import {
@@ -101,15 +102,15 @@ const SideEffects = () => {
       {loading ? (
         <View className="items-center py-16">
           <ActivityIndicator color="#0d9488" />
+          <Text className="mt-3 font-sans text-[13px] text-muted">
+            Loading your logs…
+          </Text>
         </View>
       ) : (
         <>
           {error ? (
-            <View className="mb-4 flex-row items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
-              <Icon icon="triangle-exclamation" size={16} color="#dc2626" />
-              <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink">
-                {error}
-              </Text>
+            <View className="mb-4">
+              <ErrorRetry message={error} onRetry={load} retrying={loading} />
             </View>
           ) : null}
 
@@ -124,6 +125,9 @@ const SideEffects = () => {
                 <Pressable
                   key={t.type}
                   onPress={() => setType(t.type)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={t.label}
                   className={`rounded-xl border px-4 py-3 ${
                     selected
                       ? 'border-teal bg-teal'
@@ -153,6 +157,11 @@ const SideEffects = () => {
                 <Pressable
                   key={n}
                   onPress={() => setSeverity(n)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Severity ${n}${
+                    SEVERITY_LABELS[n - 1] ? `, ${SEVERITY_LABELS[n - 1]}` : ''
+                  }`}
                   className={`flex-1 items-center rounded-xl border py-3 ${
                     selected
                       ? 'border-teal bg-teal'
@@ -192,6 +201,9 @@ const SideEffects = () => {
           <Pressable
             onPress={logSideEffect}
             disabled={!canSave}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !canSave }}
+            accessibilityLabel="Log side effect"
             className={`mt-5 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
               canSave ? 'bg-teal active:bg-teal-deep' : 'bg-teal/50'
             }`}
@@ -233,6 +245,14 @@ const SideEffects = () => {
                   </View>
                 ))}
               </View>
+            </View>
+          ) : !error ? (
+            <View className="mt-8">
+              <EmptyState
+                icon="heart-pulse"
+                title="No side effects logged"
+                body="Log how you're feeling above. Over time you'll spot patterns against your dose and titration changes."
+              />
             </View>
           ) : null}
         </>

@@ -23,26 +23,36 @@ export type DoseRecord = {
   takenAt: string;
 };
 
+// User-facing copy that distinguishes "you're offline / can't reach us" from
+// "our server erred" — so screens show "check your connection" vs "try again
+// shortly" instead of a raw `API 500` / `UnknownHostException` string.
+const NETWORK_MESSAGE =
+  "Can't reach Titrra. Check your internet connection and try again.";
+const SERVER_MESSAGE = 'Something went wrong on our end. Please try again.';
+
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const deviceId = await getDeviceId();
-  const res = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: {
-      'Content-Type': 'application/json',
-      [DEVICE_HEADER]: deviceId,
-      ...init?.headers,
-    },
-  });
+
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        'Content-Type': 'application/json',
+        [DEVICE_HEADER]: deviceId,
+        ...init?.headers,
+      },
+    });
+  } catch {
+    // fetch() rejects on DNS/connection failure (offline, host unreachable,
+    // web app not deployed) — surface a connection-specific message.
+    throw new Error(NETWORK_MESSAGE);
+  }
 
   if (!res.ok) {
-    let detail = '';
-    try {
-      const body = (await res.json()) as { error?: string };
-      detail = body.error ? `: ${body.error}` : '';
-    } catch {
-      // non-JSON error body — ignore
-    }
-    throw new Error(`API ${res.status}${detail}`);
+    // Server was reachable but errored (4xx/5xx) — distinct from the network
+    // failure above. We don't leak the raw status to the user.
+    throw new Error(SERVER_MESSAGE);
   }
 
   return res.json() as Promise<T>;
@@ -179,5 +189,23 @@ export const updateMedication = (input: {
 }): Promise<{ medication: MedicationRecord }> =>
   request('/api/medication', {
     method: 'PATCH',
+    body: JSON.stringify(input),
+  });
+
+// Atomic onboarding commit — medication + ladder + weight + side-effects in one
+// server transaction, so a mid-way failure rolls back instead of leaving the
+// user with orphaned partial records. Replaces the old per-call sequence.
+export const commitOnboarding = (input: {
+  medication?: {
+    drug?: Drug;
+    form?: MedicationForm;
+    scheduleType?: ScheduleType;
+  };
+  ladder?: { doseMg: number[]; currentDose?: number };
+  weight?: { weight: number; unit?: WeightUnit };
+  sideEffects?: SideEffectType[];
+}): Promise<{ ok: true }> =>
+  request('/api/onboarding', {
+    method: 'POST',
     body: JSON.stringify(input),
   });

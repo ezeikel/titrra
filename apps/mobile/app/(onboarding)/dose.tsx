@@ -4,13 +4,14 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { getDrugMeta } from '@/lib/glp1';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const DoseStep = () => {
   const router = useRouter();
   const { data, set } = useOnboarding();
   const meta = data.drug ? getDrugMeta(data.drug) : null;
-  const unit = meta?.form === 'ORAL' ? 'mg' : 'mg';
+  // All current GLP-1 doses (oral + injectable) are expressed in mg.
+  const unit = 'mg';
 
   return (
     <OnboardingStep
@@ -28,6 +29,9 @@ const DoseStep = () => {
             <Pressable
               key={d}
               onPress={() => set({ currentDose: d })}
+              accessibilityRole="radio"
+              accessibilityState={{ selected }}
+              accessibilityLabel={`${d} ${unit}`}
               className={`rounded-xl border px-5 py-3 ${
                 selected
                   ? 'border-teal bg-teal'

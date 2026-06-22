@@ -1,3 +1,9 @@
+// Copyright year as a build-time constant. Next 16 forbids `new Date()` during
+// static prerender (current time isn't cacheable) in both Server and Client
+// Components — see next-prerender-current-time. A footer year doesn't need to
+// be per-request dynamic; it's stamped at build and refreshed on each deploy.
+const COPYRIGHT_YEAR = 2026;
+
 const SiteFooter = () => (
   <footer className="bg-sand">
     <div className="mx-auto max-w-5xl px-4 py-12">
@@ -18,7 +24,7 @@ const SiteFooter = () => (
         </a>
       </div>
       <p className="mt-8 text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Chewy Bytes. All rights reserved.
+        © {COPYRIGHT_YEAR} Chewy Bytes. All rights reserved.
       </p>
     </div>
   </footer>

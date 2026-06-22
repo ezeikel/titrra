@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { toast } from 'sonner-native';
 import { Icon } from '@/components/Icon';
 import { useOnboarding } from '@/contexts/onboarding';
 import { trackEvent } from '@/lib/analytics';
@@ -34,18 +35,28 @@ const BuildingStep = () => {
 
     const run = async () => {
       const started = Date.now();
+      let committed = true;
       try {
         await commit();
-      } catch {
-        // Non-fatal — the reveal still shows the plan from local answers, and
-        // the user can re-log anything that didn't persist.
+      } catch (err) {
+        // The atomic commit rolled back — nothing partial was saved. Carry the
+        // failure to the reveal so it can offer a Retry instead of pretending
+        // everything saved.
+        console.error('[onboarding] commit failed', err);
+        committed = false;
+        toast.error(
+          "We couldn't save your plan. You can retry on the next screen.",
+        );
       }
       // Keep the loader up for at least ~2s so it feels considered.
       const elapsed = Date.now() - started;
       const wait = Math.max(0, 2000 - elapsed);
       setTimeout(() => {
         clearInterval(ticker);
-        router.replace('/(onboarding)/reveal');
+        router.replace({
+          pathname: '/(onboarding)/reveal',
+          params: committed ? {} : { commitFailed: '1' },
+        });
       }, wait);
     };
     run();

@@ -6,7 +6,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { Icon } from '@/components/Icon';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { trackEvent } from '@/lib/analytics';
 import {
@@ -86,19 +87,20 @@ const Weight = () => {
       eyebrow="Progress"
       title="Weight"
       subtitle="Log a weigh-in and watch the trend. A weekly check-in is plenty — it's the number moving over time that matters."
+      disclaimer
     >
       {loading ? (
         <View className="items-center py-16">
           <ActivityIndicator color="#0d9488" />
+          <Text className="mt-3 font-sans text-[13px] text-muted">
+            Loading your weigh-ins…
+          </Text>
         </View>
       ) : (
         <>
           {error ? (
-            <View className="mb-4 flex-row items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
-              <Icon icon="triangle-exclamation" size={16} color="#dc2626" />
-              <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink">
-                {error}
-              </Text>
+            <View className="mb-4">
+              <ErrorRetry message={error} onRetry={load} retrying={loading} />
             </View>
           ) : null}
 
@@ -148,6 +150,9 @@ const Weight = () => {
                   <Pressable
                     key={u}
                     onPress={() => setUnit(u)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected }}
+                    accessibilityLabel={`Unit ${u.toLowerCase()}`}
                     className={`px-5 py-4 ${selected ? 'bg-teal' : 'bg-sand'}`}
                   >
                     <Text
@@ -166,6 +171,9 @@ const Weight = () => {
           <Pressable
             onPress={logWeight}
             disabled={!canSave}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !canSave }}
+            accessibilityLabel="Log weigh-in"
             className={`mt-5 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-4 ${
               canSave ? 'bg-teal active:bg-teal-deep' : 'bg-teal/50'
             }`}
@@ -197,6 +205,14 @@ const Weight = () => {
                   </View>
                 ))}
               </View>
+            </View>
+          ) : !error ? (
+            <View className="mt-8">
+              <EmptyState
+                icon="weight-scale"
+                title="No weigh-ins yet"
+                body="Log your weight above to start tracking the trend. A weekly check-in is plenty."
+              />
             </View>
           ) : null}
         </>

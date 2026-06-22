@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
 import { usePurchases } from '@/contexts/purchases';
 import { trackEvent } from '@/lib/analytics';
@@ -24,7 +25,7 @@ type ProGateProps = {
 // to /paywall; subscribers see the real content. While the customer-info fetch
 // is in flight we show a spinner so we never flash the locked state at a Pro.
 export const ProGate = ({ feature, perks, children }: ProGateProps) => {
-  const { isPro, ready } = usePurchases();
+  const { isPro, ready, error, retry } = usePurchases();
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
@@ -32,6 +33,22 @@ export const ProGate = ({ feature, perks, children }: ProGateProps) => {
     return (
       <View className="flex-1 items-center justify-center bg-paper">
         <ActivityIndicator color="#0d9488" />
+        <Text className="mt-3 font-sans text-[13px] text-muted">
+          Loading your plan…
+        </Text>
+      </View>
+    );
+  }
+
+  // Bootstrap failed/timed out — don't wrongly show the upsell to a Pro user or
+  // trap them behind a dead screen. Offer a Retry.
+  if (error) {
+    return (
+      <View className="flex-1 items-center justify-center bg-paper px-8">
+        <ErrorRetry
+          message="We couldn't verify your subscription. Check your connection and try again."
+          onRetry={retry}
+        />
       </View>
     );
   }
@@ -78,6 +95,8 @@ export const ProGate = ({ feature, perks, children }: ProGateProps) => {
           trackEvent('paywall_viewed', { source: `gate:${feature}` });
           router.push('/paywall');
         }}
+        accessibilityRole="button"
+        accessibilityLabel="See Titrra Pro plans"
         className="mt-8 items-center rounded-2xl bg-teal px-6 py-4 active:bg-teal-deep"
       >
         <Text className="font-sans-bold text-[16px] uppercase tracking-[1px] text-paper">

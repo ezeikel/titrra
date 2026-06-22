@@ -3,7 +3,7 @@ import { TextInput } from 'react-native';
 import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const NameStep = () => {
   const router = useRouter();

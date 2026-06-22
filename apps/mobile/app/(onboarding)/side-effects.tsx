@@ -4,7 +4,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import type { SideEffectType } from '@/lib/api';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const OPTIONS: { type: SideEffectType; label: string }[] = [
   { type: 'NAUSEA', label: 'Nausea' },

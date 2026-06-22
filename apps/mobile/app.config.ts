@@ -23,6 +23,11 @@ const bundleId =
       ? 'com.chewybytes.titrra.app.internal'
       : 'com.chewybytes.titrra.app.dev';
 
+// Allow cleartext (http://) traffic in dev + preview ONLY, so on-device testing
+// can hit a local (localhost / LAN IP) or staging API. Production stays
+// https-only (Android default) — never ship cleartext in the store build.
+const allowCleartext = env !== 'production';
+
 // Minted by `eas init` under the chewybytes org (@chewybytes/titrra). Not
 // secret — it must be present in every build, so it's a hardcoded default with
 // an env override (matches go-unbeaten's pattern).
@@ -165,6 +170,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             compileSdkVersion: 36,
             targetSdkVersion: 36,
             buildToolsVersion: '36.0.0',
+            // dev/preview only — see allowCleartext above. Lets a local/LAN/
+            // staging http:// API be reached on-device; prod stays https-only.
+            usesCleartextTraffic: allowCleartext,
           },
         },
       ],

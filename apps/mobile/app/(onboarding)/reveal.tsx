@@ -1,7 +1,8 @@
-import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useMemo, useState } from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
 import { useOnboarding } from '@/contexts/onboarding';
 import { getDrugMeta } from '@/lib/glp1';
@@ -11,8 +12,25 @@ import { getDrugMeta } from '@/lib/glp1';
 const RevealStep = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { data } = useOnboarding();
+  const { commitFailed } = useLocalSearchParams<{ commitFailed?: string }>();
+  const { data, commit } = useOnboarding();
   const meta = data.drug ? getDrugMeta(data.drug) : null;
+
+  // If the atomic commit failed during the loader, let the user retry here.
+  const [saveFailed, setSaveFailed] = useState(commitFailed === '1');
+  const [retrying, setRetrying] = useState(false);
+
+  const retrySave = async () => {
+    setRetrying(true);
+    try {
+      await commit();
+      setSaveFailed(false);
+    } catch {
+      // stays failed — banner remains with the retry
+    } finally {
+      setRetrying(false);
+    }
+  };
 
   const ladder = useMemo(() => {
     if (data.currentDose == null) return [];
@@ -44,6 +62,16 @@ const RevealStep = () => {
           Here&apos;s what we set up for you. Everything&apos;s editable any
           time.
         </Text>
+
+        {saveFailed ? (
+          <View className="mt-5">
+            <ErrorRetry
+              message="We couldn't save your plan to your account. Your answers are shown below — tap to save them."
+              onRetry={retrySave}
+              retrying={retrying}
+            />
+          </View>
+        ) : null}
 
         {/* Recap cards */}
         <View className="mt-7 gap-3">
@@ -119,6 +147,8 @@ const RevealStep = () => {
       <View style={{ paddingBottom: insets.bottom + 12 }} className="px-5 pt-3">
         <Pressable
           onPress={() => router.replace('/paywall')}
+          accessibilityRole="button"
+          accessibilityLabel="See my plan"
           className="items-center rounded-2xl bg-teal px-6 py-4 active:bg-teal-deep"
         >
           <Text className="font-sans-bold text-[16px] uppercase tracking-[1px] text-paper">

@@ -18,6 +18,7 @@ export type AnalyticsEvent =
   | 'paywall_dismissed'
   | 'purchase_started'
   | 'purchase_completed'
+  | 'purchase_cancelled'
   | 'purchase_restored'
   | 'export_generated';
 

@@ -4,7 +4,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import type { WeightUnit } from '@/lib/api';
 
-const TOTAL = 8;
+const TOTAL = 7;
 
 const WeightStep = () => {
   const router = useRouter();
@@ -45,6 +45,9 @@ const WeightStep = () => {
               <Pressable
                 key={u}
                 onPress={() => set({ weightUnit: u })}
+                accessibilityRole="radio"
+                accessibilityState={{ selected }}
+                accessibilityLabel={`Unit ${u.toLowerCase()}`}
                 className={`px-5 py-4 ${selected ? 'bg-teal' : 'bg-sand'}`}
               >
                 <Text

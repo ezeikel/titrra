@@ -23,6 +23,15 @@ import {
   restorePurchases,
 } from '@/lib/purchases';
 
+/**
+ * Outcome of a purchase attempt. `cancelled` lets the UI stay silent when the
+ * user backed out of the native sheet, but surface a real error otherwise
+ * (pattern from parking-ticket-pal's paywall).
+ */
+export type PurchaseResult =
+  | { ok: true; cancelled: false }
+  | { ok: false; cancelled: boolean };
+
 type PurchasesContextValue = {
   /** Initial customer-info fetch finished (UI can decide what to gate). */
   ready: boolean;
@@ -31,7 +40,15 @@ type PurchasesContextValue = {
   monthly: PurchasesPackage | null;
   annual: PurchasesPackage | null;
   lifetime: PurchasesPackage | null;
-  purchase: (pkg: PurchasesPackage) => Promise<boolean>;
+  /**
+   * Set when the RevenueCat bootstrap (configure / customer-info / offerings)
+   * failed or timed out. Lets the paywall + ProGate show "couldn't verify your
+   * plan" + a Retry instead of a dead disabled CTA or an infinite spinner.
+   */
+  error: boolean;
+  /** Re-run the bootstrap (used by the Retry affordance). */
+  retry: () => void;
+  purchase: (pkg: PurchasesPackage) => Promise<PurchaseResult>;
   restore: () => Promise<boolean>;
 };
 
@@ -42,9 +59,22 @@ const PurchasesContext = createContext<PurchasesContextValue>({
   monthly: null,
   annual: null,
   lifetime: null,
-  purchase: async () => false,
+  error: false,
+  retry: () => {},
+  purchase: async () => ({ ok: false, cancelled: false }),
   restore: async () => false,
 });
+
+// RevenueCat's getOfferings/getCustomerInfo can hang on a flaky network. Cap
+// the bootstrap so ProGate/paywall never spin forever.
+const BOOT_TIMEOUT_MS = 12_000;
+const withTimeout = <T,>(p: Promise<T>, ms: number): Promise<T> =>
+  Promise.race([
+    p,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error('timeout')), ms),
+    ),
+  ]);
 
 export const usePurchases = () => useContext(PurchasesContext);
 
@@ -52,9 +82,18 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
   const [ready, setReady] = useState(false);
   const [isPro, setIsPro] = useState(false);
   const [offering, setOffering] = useState<PurchasesOffering | null>(null);
+  const [error, setError] = useState(false);
+  // Bumped by retry() to re-run the bootstrap effect.
+  const [bootAttempt, setBootAttempt] = useState(0);
 
   const applyInfo = useCallback((info: CustomerInfo) => {
     setIsPro(hasPro(info));
+  }, []);
+
+  const retry = useCallback(() => {
+    setReady(false);
+    setError(false);
+    setBootAttempt((n) => n + 1);
   }, []);
 
   useEffect(() => {
@@ -66,20 +105,26 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
       // SubscriptionContext). For the skeleton we configure anonymously.
       const ok = await configurePurchases();
       if (!ok) {
+        // No SDK key (dev / not configured) — not an error, just no IAP. Ready
+        // with no offering; screens treat isPro=false as "free tier".
         if (!cancelled) setReady(true);
         return;
       }
 
       try {
-        const [info, current] = await Promise.all([
-          getCustomerInfo(),
-          getOfferings(),
-        ]);
+        const [info, current] = await withTimeout(
+          Promise.all([getCustomerInfo(), getOfferings()]),
+          BOOT_TIMEOUT_MS,
+        );
         if (cancelled) return;
         applyInfo(info);
         setOffering(current);
+        setError(false);
       } catch (err) {
+        // Configure succeeded but customer-info/offerings failed or timed out.
+        // Surface it so the UI offers Retry instead of a dead CTA / spinner.
         console.error('[purchases] boot failed', err);
+        if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setReady(true);
       }
@@ -89,25 +134,23 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
     return () => {
       cancelled = true;
     };
-  }, [applyInfo]);
+  }, [applyInfo, bootAttempt]);
 
   const purchase = useCallback(
-    async (pkg: PurchasesPackage) => {
+    async (pkg: PurchasesPackage): Promise<PurchaseResult> => {
       try {
         const info = await purchasePackage(pkg);
         applyInfo(info);
-        return hasPro(info);
+        return { ok: hasPro(info), cancelled: false };
       } catch (err: unknown) {
-        if (
+        const cancelled = Boolean(
           err &&
-          typeof err === 'object' &&
-          'userCancelled' in err &&
-          (err as { userCancelled?: boolean }).userCancelled
-        ) {
-          return false;
-        }
-        console.error('[purchases] purchase failed', err);
-        return false;
+            typeof err === 'object' &&
+            'userCancelled' in err &&
+            (err as { userCancelled?: boolean }).userCancelled,
+        );
+        if (!cancelled) console.error('[purchases] purchase failed', err);
+        return { ok: false, cancelled };
       }
     },
     [applyInfo],
@@ -129,15 +172,21 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
       ready,
       isPro,
       offering,
-      monthly: offering ? findPackage(offering, PRO_PACKAGES.monthly) ?? null : null,
-      annual: offering ? findPackage(offering, PRO_PACKAGES.annual) ?? null : null,
-      lifetime: offering
-        ? findPackage(offering, PRO_PACKAGES.lifetime) ?? null
+      monthly: offering
+        ? (findPackage(offering, PRO_PACKAGES.monthly) ?? null)
         : null,
+      annual: offering
+        ? (findPackage(offering, PRO_PACKAGES.annual) ?? null)
+        : null,
+      lifetime: offering
+        ? (findPackage(offering, PRO_PACKAGES.lifetime) ?? null)
+        : null,
+      error,
+      retry,
       purchase,
       restore,
     }),
-    [ready, isPro, offering, purchase, restore],
+    [ready, isPro, offering, error, retry, purchase, restore],
   );
 
   return (

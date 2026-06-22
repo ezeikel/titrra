@@ -1,6 +1,8 @@
 import { useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { EmptyState } from '@/components/EmptyState';
+import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
 import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
@@ -28,9 +30,10 @@ const formatRelative = (takenAt: Date): string => {
 
 // Map the API's DoseRecord (string takenAt) into the shape the rotation logic
 // and the recent-doses list expect.
-type HistoryItem = RecentDose & { doseMg: number };
+type HistoryItem = RecentDose & { doseMg: number; id?: string };
 const toHistory = (doses: DoseRecord[]): HistoryItem[] =>
   doses.map((d) => ({
+    id: d.id,
     injectionSite: d.injectionSite,
     takenAt: new Date(d.takenAt),
     doseMg: d.doseMg,
@@ -49,22 +52,31 @@ const Today = () => {
   const [doseMg, setDoseMg] = useState<number>(2.5);
   const overusing = useMemo(() => isOverusingRegion(history), [history]);
 
+  // Guards setState after the screen unmounts (e.g. tab switch mid-fetch).
+  const mounted = useRef(true);
+
   const load = useCallback(async () => {
     try {
       setError(null);
       const { doses } = await listDoses();
+      if (!mounted.current) return;
       const items = toHistory(doses);
       setHistory(items);
       setSite(suggestNextSite(items));
     } catch (e) {
+      if (!mounted.current) return;
       setError(e instanceof Error ? e.message : 'Could not load your doses');
     } finally {
-      setLoading(false);
+      if (mounted.current) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
+    mounted.current = true;
     load();
+    return () => {
+      mounted.current = false;
+    };
   }, [load]);
 
   const logDose = async () => {
@@ -72,7 +84,9 @@ const Today = () => {
     setSaving(true);
     setError(null);
     // Optimistic insert so the UI feels instant; reconcile from the server.
+    // `load()` replaces this with the real row (carrying the DB id) on success.
     const optimistic: HistoryItem = {
+      id: `optimistic-${Date.now()}`,
       injectionSite: site,
       takenAt: new Date(),
       doseMg,
@@ -112,11 +126,8 @@ const Today = () => {
       ) : (
         <>
           {error ? (
-            <View className="mb-4 flex-row items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 p-4">
-              <Icon icon="triangle-exclamation" size={16} color="#dc2626" />
-              <Text className="flex-1 font-sans text-[13px] leading-[18px] text-ink">
-                {error}
-              </Text>
+            <View className="mb-4">
+              <ErrorRetry message={error} onRetry={load} retrying={loading} />
             </View>
           ) : null}
 
@@ -139,6 +150,8 @@ const Today = () => {
           {/* Titration ladder entry point */}
           <Pressable
             onPress={() => router.push('/titration')}
+            accessibilityRole="button"
+            accessibilityLabel="Open titration ladder"
             className="mt-3 flex-row items-center justify-between rounded-2xl border border-border bg-sand p-4 active:bg-mist"
           >
             <View className="flex-1">
@@ -149,7 +162,7 @@ const Today = () => {
                 <ProBadge />
               </View>
               <Text className="mt-0.5 font-sans text-[13px] text-muted">
-                See where you are on your dose-escalation plan.
+                See where you are on your titration plan from your provider.
               </Text>
             </View>
             <Icon icon="chevron-right" size={16} color="#5a6b69" />
@@ -177,6 +190,11 @@ const Today = () => {
                 <Pressable
                   key={s}
                   onPress={() => setSite(s)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Injection site ${SITE_LABELS[s]}${
+                    isSuggested ? ', suggested' : ''
+                  }`}
                   className={`rounded-xl border px-4 py-3 ${
                     selected
                       ? 'border-teal bg-teal'
@@ -211,6 +229,9 @@ const Today = () => {
                 <Pressable
                   key={d}
                   onPress={() => setDoseMg(d)}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected }}
+                  accessibilityLabel={`Dose ${d} milligrams`}
                   className={`rounded-xl border px-4 py-2.5 ${
                     selected
                       ? 'border-teal bg-teal'
@@ -233,6 +254,9 @@ const Today = () => {
           <Pressable
             onPress={logDose}
             disabled={saving}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saving }}
+            accessibilityLabel={`Log ${doseMg} milligram dose at ${SITE_LABELS[site]}`}
             className={`mt-8 flex-row items-center justify-center gap-2 rounded-2xl px-6 py-5 ${
               saving ? 'bg-teal/60' : 'bg-teal active:bg-teal-deep'
             }`}
@@ -252,7 +276,7 @@ const Today = () => {
               <View className="mt-3 gap-2">
                 {history.slice(0, 5).map((d, i) => (
                   <View
-                    key={`${(d.takenAt as Date).toISOString()}-${i}`}
+                    key={d.id ?? `${(d.takenAt as Date).toISOString()}-${i}`}
                     className="flex-row items-center justify-between rounded-xl border border-border bg-sand px-4 py-3"
                   >
                     <View className="flex-row items-center gap-2">
@@ -270,6 +294,14 @@ const Today = () => {
                   </View>
                 ))}
               </View>
+            </View>
+          ) : !error ? (
+            <View className="mt-8">
+              <EmptyState
+                icon="syringe"
+                title="No doses logged yet"
+                body="Tap the button above after your shot. Titrra remembers each site and rotates the next one for you."
+              />
             </View>
           ) : null}
         </>

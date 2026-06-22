@@ -9,14 +9,9 @@ import {
   useState,
 } from 'react';
 import {
-  addStep,
+  commitOnboarding,
   type Drug,
-  listSteps,
-  logSideEffect,
-  logWeight,
   type SideEffectType,
-  startStep,
-  updateMedication,
   type WeightUnit,
 } from '@/lib/api';
 import { getDrugMeta } from '@/lib/glp1';
@@ -33,7 +28,6 @@ export type OnboardingData = {
   currentDose: number | null;
   goalDose: number | null;
   currentWeight: number | null;
-  goalWeight: number | null;
   weightUnit: WeightUnit;
   sideEffects: SideEffectType[];
   remindersOptIn: boolean;
@@ -45,7 +39,6 @@ const EMPTY: OnboardingData = {
   currentDose: null,
   goalDose: null,
   currentWeight: null,
-  goalWeight: null,
   weightUnit: 'KG',
   sideEffects: [],
   remindersOptIn: false,
@@ -83,53 +76,44 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
 
   const reset = useCallback(() => setData(EMPTY), []);
 
-  // Batch every answer to the server. Order matters: medication first (so the
-  // titration ladder attaches to the right med), then the ladder, then the
-  // optional weight + side-effect seeds.
+  // Send every answer to the server in ONE atomic request. The server applies
+  // medication + ladder + weight + side-effects in a single transaction, so a
+  // failure rolls everything back (no orphaned partial state) and a retry is
+  // safe. Throws on failure so the caller (building.tsx) can show a retry.
   const commit = useCallback(async () => {
     const d = data;
 
-    if (d.drug) {
-      const meta = getDrugMeta(d.drug);
-      await updateMedication({
-        drug: d.drug,
-        form: meta.form,
-        scheduleType: meta.scheduleType,
-      });
-    }
-
-    // Seed the titration ladder from current → goal dose, then mark the
-    // current rung as started (it's where they are today).
+    // Build the titration ladder client-side: current → goal (or current → top
+    // of the drug's ladder), guaranteeing the current dose is included.
+    let ladder: { doseMg: number[]; currentDose?: number } | undefined;
     if (d.currentDose != null && d.drug) {
       const meta = getDrugMeta(d.drug);
-      const rungs = meta.doses.filter((mg) => {
-        if (d.goalDose != null) {
-          return mg >= d.currentDose! && mg <= d.goalDose;
-        }
-        return mg >= d.currentDose!;
-      });
-      // Guarantee the current dose is present even if it's off-ladder.
-      const ladder = rungs.includes(d.currentDose)
+      const rungs = meta.doses.filter((mg) =>
+        d.goalDose != null
+          ? mg >= d.currentDose! && mg <= d.goalDose
+          : mg >= d.currentDose!,
+      );
+      const doses = rungs.includes(d.currentDose)
         ? rungs
         : [d.currentDose, ...rungs].sort((a, b) => a - b);
-
-      for (const mg of ladder) {
-        await addStep({ doseMg: mg });
-      }
-      // Mark the current dose's rung as started.
-      const { steps } = await listSteps();
-      const currentStep = steps.find((s) => s.doseMg === d.currentDose);
-      if (currentStep) await startStep(currentStep.id);
+      ladder = { doseMg: doses, currentDose: d.currentDose };
     }
 
-    if (d.currentWeight != null) {
-      await logWeight({ weight: d.currentWeight, unit: d.weightUnit });
-    }
-
-    for (const type of d.sideEffects) {
-      // Default severity 2 (mild-moderate) for an onboarding pre-existing flag.
-      await logSideEffect({ type, severity: 2 });
-    }
+    await commitOnboarding({
+      medication: d.drug
+        ? {
+            drug: d.drug,
+            form: getDrugMeta(d.drug).form,
+            scheduleType: getDrugMeta(d.drug).scheduleType,
+          }
+        : undefined,
+      ladder,
+      weight:
+        d.currentWeight != null
+          ? { weight: d.currentWeight, unit: d.weightUnit }
+          : undefined,
+      sideEffects: d.sideEffects.length > 0 ? d.sideEffects : undefined,
+    });
   }, [data]);
 
   const markOnboarded = useCallback(async () => {

@@ -37,6 +37,7 @@
   "pnpm": {
     "onlyBuiltDependencies": [
       "@sentry/cli",
+      "@shopify/react-native-skia",
       "core-js",
       "sharp",
       "unrs-resolver"

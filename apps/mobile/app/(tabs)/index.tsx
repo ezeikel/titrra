@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { BodyMap } from '@/components/BodyMap';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
@@ -19,7 +20,6 @@ import {
 import { elevation } from '@/lib/elevation';
 import { getDrugMeta } from '@/lib/glp1';
 import {
-  INJECTION_SITES,
   type InjectionSite,
   isOverusingRegion,
   type RecentDose,
@@ -253,44 +253,17 @@ const Today = () => {
                 />
               </View>
 
-              {/* Site picker */}
+              {/* Site picker — tappable body map */}
               <Text className="mt-7 font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
                 Injection site
               </Text>
-              <View className="mt-3.5 flex-row flex-wrap gap-2.5">
-                {INJECTION_SITES.map((s) => {
-                  const selected = s === site;
-                  const isSuggested = s === suggested;
-                  return (
-                    <Pressable
-                      key={s}
-                      onPress={() => setSite(s)}
-                      accessibilityRole="radio"
-                      accessibilityState={{ selected }}
-                      accessibilityLabel={`Injection site ${SITE_LABELS[s]}${
-                        isSuggested ? ', suggested' : ''
-                      }`}
-                      className={`rounded-2xl border-2 px-4 py-3 ${
-                        selected
-                          ? 'border-teal bg-accent'
-                          : 'border-border bg-paper active:bg-mist'
-                      }`}
-                    >
-                      <Text
-                        className={`font-sans-semibold text-[14px] ${
-                          selected ? 'text-teal-deep' : 'text-ink'
-                        }`}
-                      >
-                        {SITE_LABELS[s]}
-                      </Text>
-                      {isSuggested && !selected ? (
-                        <Text className="font-sans-bold text-[10px] uppercase tracking-[1px] text-teal">
-                          Suggested
-                        </Text>
-                      ) : null}
-                    </Pressable>
-                  );
-                })}
+              <View className="mt-3">
+                <BodyMap
+                  selected={site}
+                  suggested={suggested}
+                  recent={history}
+                  onSelect={setSite}
+                />
               </View>
             </View>
           ) : null}

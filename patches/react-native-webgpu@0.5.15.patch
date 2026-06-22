@@ -1,0 +1,17 @@
+diff --git a/react-native-webgpu.podspec b/react-native-webgpu.podspec
+index a6b12cf44262855809cacc01974e9ace5a5b751f..305cfc3ab0b15dab34c685ff709b9da94aa97644 100644
+--- a/react-native-webgpu.podspec
++++ b/react-native-webgpu.podspec
+@@ -26,7 +26,11 @@ Pod::Spec.new do |s|
+   s.frameworks = "AVFoundation", "CoreMedia", "CoreVideo"
+ 
+   s.pod_target_xcconfig = {
+-    'HEADER_SEARCH_PATHS' => '$(PODS_TARGET_SRCROOT)/cpp',
++    # cpp/jsi is needed so cpp/rnwgpu/async/AsyncTaskHandle.cpp's
++    # `#include "Promise.h"` resolves to cpp/jsi/Promise.h (the full class def);
++    # without it Promise stays an incomplete type and the build fails. The other
++    # cpp subdirs are added for the same cross-include reason.
++    'HEADER_SEARCH_PATHS' => '"$(PODS_TARGET_SRCROOT)/cpp" "$(PODS_TARGET_SRCROOT)/cpp/jsi" "$(PODS_TARGET_SRCROOT)/cpp/rnwgpu" "$(PODS_TARGET_SRCROOT)/cpp/webgpu"',
+   }
+ 
+   # Use install_modules_dependencies helper to install the dependencies if React Native version >=0.71.0.

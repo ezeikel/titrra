@@ -106,7 +106,9 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     android: {
       adaptiveIcon: {
         foregroundImage: pickIcon('adaptive-icon'),
-        backgroundColor: '#0d9488',
+        // Match the icon artwork's baked-in background (#0499a3), not the old
+        // #0d9488 — otherwise the adaptive-icon edge / splash tile mismatches.
+        backgroundColor: '#0499a3',
       },
       package: bundleId,
       intentFilters: [
@@ -125,13 +127,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     },
     plugins: [
       'expo-router',
+      // R3F's native entrypoint imports expo-asset (GL asset pipeline).
+      'expo-asset',
       [
         'expo-splash-screen',
         {
           image: './assets/images/splash-icon.png',
           imageWidth: 200,
           resizeMode: 'contain',
-          backgroundColor: '#0d9488',
+          // Match the icon artwork's baked-in background so the splash tile
+          // blends into the screen instead of showing a colour seam.
+          backgroundColor: '#0499a3',
         },
       ],
       'expo-notifications',

@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
-import { BodyMap } from '@/components/BodyMap';
+import { BodyMapSwitch } from '@/components/BodyMapSwitch';
 import { EmptyState } from '@/components/EmptyState';
 import { ErrorRetry } from '@/components/ErrorRetry';
 import { Icon } from '@/components/Icon';
@@ -258,7 +258,7 @@ const Today = () => {
                 Injection site
               </Text>
               <View className="mt-3">
-                <BodyMap
+                <BodyMapSwitch
                   selected={site}
                   suggested={suggested}
                   recent={history}

@@ -143,11 +143,35 @@ premium feel? Decision: **yes, but scoped to ONE hero moment, and deferred.**
 1. v2 re-skin (now): achieve premium with **Skia** — glossy depth, the body map
    as a beautiful shaded 2D illustration, a satisfying ladder-advance animation.
    No cold-start hit, no GL build risk, reversible.
-2. Later (separate scoped spike, after the re-skin ships + is stable): a **real
-   3D rotatable body** via React Three Fiber on JUST the injection-site screen —
-   lazy-loaded, feature-flagged, flat fallback. A deliberate hero-feature
-   investment, not a redesign blocker. Rationale: pre-launch, just resolved a
-   crash-on-launch; don't add a GL engine to the critical path now.
+2. ~~Later~~ **DONE (2026-06-22): real 3D rotatable body shipped** via React
+   Three Fiber on JUST the injection-site screen. The 2D Skia map landed first
+   (`components/BodyMap.tsx`), then the 3D version was built as a drop-in.
+   - **Stack:** `@react-three/fiber@9.6.1` (the React-19 line; peer `react >=19
+     <19.3`, so 19.2.3 fits) + `three@0.184.0` + Expo-pinned `expo-gl`
+     (~56.0.5) / `expo-asset` / `expo-file-system`. Imports from
+     `@react-three/fiber/native`. NO drei, NO expo-three (the /native Canvas
+     wires three's renderer onto expo-gl directly). R3F v9 ships no
+     `react-reconciler` dep (uses its-fine + scheduler + zustand), so the
+     pinned `react 19.2.3` override is safe — verified `pnpm why react` (one
+     19.2.3) + `react-reconciler` (single 0.31.0 from Skia).
+   - **Mesh: procedural three.js primitives, NOT a .glb.** A friendly low-poly
+     mannequin (capsule torso/limbs + sphere head). Rationale: the GLB load
+     path on RN/Expo has documented `file://`-URI + texture-blob loader bugs
+     unvalidated on RN 0.85 / new-arch / Expo 56, and buys nothing (same native
+     deps either way). Procedural = zero asset/license/loader risk, zero bundle
+     bytes, exact author-chosen anchor offsets, and reads warmer/less clinical.
+     Quaternius CC0 base mesh is the documented v2 upgrade once proven.
+   - **Interaction:** drag-to-orbit via gesture-handler `Gesture.Pan().runOnJS
+     (true)` → ref → `useFrame` damped follow (NOT drei OrbitControls — DOM-only
+     on /native); tap-to-select via R3F's built-in raycaster (`mesh onClick` +
+     `stopPropagation`); `frameloop="demand"` + `invalidate()` so a static body
+     idles the GPU. Suggested site pulses teal glow; selected fills teal;
+     recently-used carry the graded warm tint (same `recencyMap` as 2D).
+   - **Safety:** behind `USE_3D_BODY_MAP` flag in `components/BodyMapSwitch.tsx`,
+     wrapped in an error boundary that renders the 2D `BodyMap` if the flag is
+     off or GL throws. Zero-regression fallback = flip the flag.
+   - **Verified on the iOS simulator** (Android emulator `/data` can't fit the
+     Skia+three APK — see SHIP-CHECKLIST build gotchas).
 
 ## 4c. Input patterns — decided + built (2026-06-22)
 

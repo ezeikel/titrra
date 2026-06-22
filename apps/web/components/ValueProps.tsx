@@ -82,7 +82,7 @@ const ValueProps = () => (
       <span className="eyebrow block text-center text-teal-deep">
         Built for the routine, not the calories
       </span>
-      <h2 className="mx-auto mt-4 max-w-2xl text-balance text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+      <h2 className="font-heading mx-auto mt-4 max-w-2xl text-balance text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         Everything your weight-loss shot needs. Nothing it doesn&apos;t.
       </h2>
       <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">

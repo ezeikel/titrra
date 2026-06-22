@@ -29,7 +29,7 @@ const Faq = () => (
   <section id="faq" className="border-y border-border bg-white">
     <div className="mx-auto max-w-3xl px-4 py-20 sm:py-24">
       <span className="eyebrow block text-center text-teal-deep">FAQ</span>
-      <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+      <h2 className="font-heading mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         Questions, answered
       </h2>
       <div className="mt-12 divide-y divide-border">

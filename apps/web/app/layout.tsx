@@ -1,6 +1,6 @@
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
-import { Geist_Mono, Inter } from 'next/font/google';
+import { Bricolage_Grotesque, Geist_Mono, Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
@@ -9,6 +9,12 @@ const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
   weight: ['400', '500', '600', '700', '800'],
+});
+// Display / headings — mirrors the mobile app (premium-health editorial feel).
+const bricolage = Bricolage_Grotesque({
+  variable: '--font-bricolage',
+  subsets: ['latin'],
+  weight: ['500', '600', '700', '800'],
 });
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
@@ -71,7 +77,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} bg-background`}
+      className={`${inter.variable} ${bricolage.variable} ${geistMono.variable} bg-background`}
     >
       <head>
         <script

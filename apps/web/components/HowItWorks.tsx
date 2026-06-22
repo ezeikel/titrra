@@ -22,7 +22,7 @@ const HowItWorks = () => (
       <span className="eyebrow block text-center text-teal-deep">
         How it works
       </span>
-      <h2 className="mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+      <h2 className="font-heading mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
         Less mental load. One place for everything.
       </h2>
       <div className="mt-14 grid gap-8 sm:grid-cols-3">

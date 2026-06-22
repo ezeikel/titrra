@@ -4,7 +4,7 @@ const Hero = () => (
   <section className="relative overflow-hidden bg-sand">
     <div className="mx-auto flex max-w-5xl flex-col items-center px-4 py-24 text-center sm:py-32">
       <span className="eyebrow text-teal-deep">GLP-1 &amp; shot tracker</span>
-      <h1 className="mt-5 max-w-3xl text-balance text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl">
+      <h1 className="font-heading mt-5 max-w-3xl text-balance text-5xl font-extrabold leading-[1.05] tracking-tight text-ink sm:text-6xl">
         Stay on track with <span className="text-teal">every dose</span>.
       </h1>
       <p className="mt-6 max-w-xl text-balance text-lg leading-relaxed text-muted-foreground">

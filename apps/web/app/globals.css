@@ -4,7 +4,8 @@
 
 @theme inline {
   --font-sans: var(--font-inter), "Inter Fallback", system-ui, sans-serif;
-  --font-heading: var(--font-inter);
+  --font-heading: var(--font-bricolage), var(--font-inter), system-ui,
+    sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
   /* Titrra brand tokens — calm, clinical, premium. Teal primary + soft sand
@@ -45,36 +46,37 @@
 }
 
 :root {
-  /* Brand palette */
-  --teal: #0d9488;
-  --teal-deep: #0f766e;
-  --sand: #faf8f3;
-  --ink: #0e1a1a;
-  --mist: #eef2f1;
-  --success: #16a34a;
-  --warn: #d97706;
+  /* Brand palette — v2 "premium-health", mirrors apps/mobile/global.css.
+   * Deeper warm teal, two-level warm surfaces, muted semantic states. */
+  --teal: #0e7c7b;
+  --teal-deep: #0a5f5e;
+  --sand: #f7f4ed;
+  --ink: #14201f;
+  --mist: #eceae3;
+  --success: #2f9e6f;
+  --warn: #c98a2b;
 
   --radius: 0.875rem;
 
   /* shadcn light mappings */
-  --background: #ffffff;
-  --foreground: #0e1a1a;
+  --background: #f7f4ed;
+  --foreground: #14201f;
   --card: #ffffff;
-  --card-foreground: #0e1a1a;
+  --card-foreground: #14201f;
   --popover: #ffffff;
-  --popover-foreground: #0e1a1a;
-  --primary: #0d9488;
+  --popover-foreground: #14201f;
+  --primary: #0e7c7b;
   --primary-foreground: #ffffff;
-  --secondary: #eef2f1;
-  --secondary-foreground: #0e1a1a;
-  --muted: #eef2f1;
-  --muted-foreground: #5a6b69;
-  --accent: #e6f3f1;
-  --accent-foreground: #0f766e;
-  --destructive: #dc2626;
-  --border: #e2e8e6;
-  --input: #e2e8e6;
-  --ring: #0d9488;
+  --secondary: #eceae3;
+  --secondary-foreground: #14201f;
+  --muted: #eceae3;
+  --muted-foreground: #5f706e;
+  --accent: #e2f1ef;
+  --accent-foreground: #0a5f5e;
+  --destructive: #cf5a4e;
+  --border: #e6e2d8;
+  --input: #e6e2d8;
+  --ring: #0e7c7b;
 }
 
 @layer base {

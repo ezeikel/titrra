@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
+import { usePurchases } from '@/contexts/purchases';
 import { elevation } from '@/lib/elevation';
 import type { IntroSlideData } from '@/lib/onboarding-intro';
 
@@ -182,37 +183,52 @@ const LadderHero = () => (
   </View>
 );
 
-const PLANS = [
-  ['Monthly', '$7.99'],
-  ['Annual', '$39.99'],
-  ['Lifetime', '$59.99'],
+// Fallback prices (US English) shown only until RevenueCat's locale-aware
+// prices load — or in the dev variant where RC is intentionally inert. In
+// preview/production the real localized `priceString` (£/€/$ per the user's
+// App Store region) replaces these, so a non-US user never sees a wrong symbol.
+const PLAN_FALLBACKS = [
+  { label: 'Monthly', fallback: '$7.99' },
+  { label: 'Annual', fallback: '$39.99' },
+  { label: 'Lifetime', fallback: '$59.99' },
 ] as const;
-const PricingHero = () => (
-  <View
-    className="w-full max-w-[300px] rounded-3xl bg-paper p-6"
-    style={elevation.raised}
-  >
-    <Text className="font-sans-bold text-[11px] uppercase tracking-[2px] text-teal">
-      One simple plan
-    </Text>
-    <View className="mt-3 gap-2">
-      {PLANS.map(([label, price], i) => (
-        <View
-          key={label}
-          className={`flex-row items-center justify-between rounded-xl px-4 py-2.5 ${
-            i === 1 ? 'bg-accent' : 'bg-mist'
-          }`}
-        >
-          <Text className="font-sans-semibold text-[13px] text-ink">
-            {label}
-          </Text>
-          <Text className="font-sans-bold text-[13px] text-teal-deep">
-            {price}
-          </Text>
-        </View>
-      ))}
+
+const PricingHero = () => {
+  const { monthly, annual, lifetime } = usePurchases();
+  // Map each row to the live RC priceString when available, else the fallback.
+  const prices: Record<string, string> = {
+    Monthly: monthly?.product.priceString ?? PLAN_FALLBACKS[0].fallback,
+    Annual: annual?.product.priceString ?? PLAN_FALLBACKS[1].fallback,
+    Lifetime: lifetime?.product.priceString ?? PLAN_FALLBACKS[2].fallback,
+  };
+
+  return (
+    <View
+      className="w-full max-w-[300px] rounded-3xl bg-paper p-6"
+      style={elevation.raised}
+    >
+      <Text className="font-sans-bold text-[11px] uppercase tracking-[2px] text-teal">
+        One simple plan
+      </Text>
+      <View className="mt-3 gap-2">
+        {PLAN_FALLBACKS.map(({ label }, i) => (
+          <View
+            key={label}
+            className={`flex-row items-center justify-between rounded-xl px-4 py-2.5 ${
+              i === 1 ? 'bg-accent' : 'bg-mist'
+            }`}
+          >
+            <Text className="font-sans-semibold text-[13px] text-ink">
+              {label}
+            </Text>
+            <Text className="font-sans-bold text-[13px] text-teal-deep">
+              {prices[label]}
+            </Text>
+          </View>
+        ))}
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default IntroSlide;

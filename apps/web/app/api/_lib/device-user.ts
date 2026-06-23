@@ -18,11 +18,23 @@ export const resolveUserAndMedication = async (deviceId: string) => {
   const db = getDb();
   const deviceEmail = `device:${deviceId}`;
 
-  const user = await db.user.upsert({
-    where: { email: deviceEmail },
-    update: {},
-    create: { email: deviceEmail },
-  });
+  // The Today screen fires several reads in parallel on first load, each of
+  // which resolves the user — so concurrent upserts can race on the unique
+  // `email` (both miss the row, both try to create). Catch the unique-violation
+  // and re-read: whichever insert won, the row now exists.
+  const user = await db.user
+    .upsert({
+      where: { email: deviceEmail },
+      update: {},
+      create: { email: deviceEmail },
+    })
+    .catch(async (err) => {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2002') {
+        return db.user.findUniqueOrThrow({ where: { email: deviceEmail } });
+      }
+      throw err;
+    });
 
   let medication = await db.medication.findFirst({
     where: { userId: user.id, active: true },

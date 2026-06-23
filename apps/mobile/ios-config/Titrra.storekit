@@ -1,0 +1,103 @@
+{
+  "identifier" : "T1TRRA001",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "59.99",
+      "familyShareable" : false,
+      "internalID" : "T1LIFETIME",
+      "localizations" : [
+        {
+          "description" : "Unlock Titrra Pro forever — one payment, all features.",
+          "displayName" : "Titrra Pro Lifetime",
+          "locale" : "en_US"
+        }
+      ],
+      "productID" : "titrra_pro_lifetime_v1",
+      "referenceName" : "Titrra Pro Lifetime",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+    "_applicationInternalID" : "6782397414",
+    "_developerTeamID" : "9QM9X84F6T",
+    "_failTransactionsEnabled" : false,
+    "_lastSynchronizedDate" : 0,
+    "_locale" : "en_US",
+    "_storefront" : "USA",
+    "_storeKitErrors" : [
+
+    ]
+  },
+  "subscriptionGroups" : [
+    {
+      "id" : "22171435",
+      "localizations" : [
+
+      ],
+      "name" : "Titrra Pro",
+      "subscriptions" : [
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "7.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "T1MONTHLY",
+          "introductoryOffer" : null,
+          "localizations" : [
+            {
+              "description" : "Titrra Pro, billed monthly.",
+              "displayName" : "Titrra Pro Monthly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "titrra_pro_monthly_v1",
+          "recurringSubscriptionPeriod" : "P1M",
+          "referenceName" : "Titrra Pro Monthly",
+          "subscriptionGroupID" : "22171435",
+          "type" : "RecurringSubscription"
+        },
+        {
+          "adHocOffers" : [
+
+          ],
+          "codeOffers" : [
+
+          ],
+          "displayPrice" : "39.99",
+          "familyShareable" : false,
+          "groupNumber" : 1,
+          "internalID" : "T1YEARLY",
+          "introductoryOffer" : {
+            "internalID" : "T1YEARTRIAL",
+            "paymentMode" : "free",
+            "subscriptionPeriod" : "P3D"
+          },
+          "localizations" : [
+            {
+              "description" : "Titrra Pro, billed yearly — best value.",
+              "displayName" : "Titrra Pro Yearly",
+              "locale" : "en_US"
+            }
+          ],
+          "productID" : "titrra_pro_yearly_v2",
+          "recurringSubscriptionPeriod" : "P1Y",
+          "referenceName" : "Titrra Pro Yearly",
+          "subscriptionGroupID" : "22171435",
+          "type" : "RecurringSubscription"
+        }
+      ]
+    }
+  ],
+  "version" : {
+    "major" : 4,
+    "minor" : 0
+  }
+}

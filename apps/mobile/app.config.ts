@@ -190,6 +190,21 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           },
         },
       ],
+      // Local StoreKit testing for `expo run:ios`: copies the .storekit into
+      // ios/ and wires it into the generated scheme's Run action so RevenueCat
+      // resolves the `default` offering (monthly/yearly/lifetime) IN THE
+      // SIMULATOR with no App Store Connect / no uploaded RC Apple creds.
+      // Re-runs on every prebuild (survives `expo prebuild --clean`).
+      // NON-PRODUCTION ONLY: dev + preview run on simulators; production
+      // (TestFlight/store) uses real ASC and must NEVER ship a test config.
+      ...(env !== 'production'
+        ? [
+            [
+              './plugins/withStoreKitConfig',
+              { relativePath: 'ios-config/Titrra.storekit' },
+            ] as [string, { relativePath: string }],
+          ]
+        : []),
     ],
     experiments: { typedRoutes: true },
     runtimeVersion: { policy: 'appVersion' },

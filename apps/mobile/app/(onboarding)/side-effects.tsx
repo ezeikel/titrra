@@ -59,7 +59,7 @@ const SideEffectsStep = () => {
             >
               <Text
                 className={`font-sans-semibold text-[14px] ${
-                  selected ? 'text-paper' : 'text-ink'
+                  selected ? 'text-teal-deep' : 'text-ink'
                 }`}
               >
                 {o.label}

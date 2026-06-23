@@ -56,16 +56,18 @@ const BodyShapeStep = () => {
               }`}
             >
               <View>
+                {/* Selected card sits on the pale `accent` tint, so the label
+                    must be dark teal (not white) to stay legible. */}
                 <Text
                   className={`font-sans-semibold text-[16px] ${
-                    selected ? 'text-paper' : 'text-ink'
+                    selected ? 'text-teal-deep' : 'text-ink'
                   }`}
                 >
                   {o.label}
                 </Text>
                 <Text
                   className={`mt-0.5 font-sans text-[13px] ${
-                    selected ? 'text-paper/80' : 'text-muted'
+                    selected ? 'text-teal-deep/70' : 'text-muted'
                   }`}
                 >
                   {o.hint}
@@ -73,11 +75,11 @@ const BodyShapeStep = () => {
               </View>
               <View
                 className={`size-6 items-center justify-center rounded-full border-2 ${
-                  selected ? 'border-paper bg-paper' : 'border-border'
+                  selected ? 'border-teal bg-teal' : 'border-border'
                 }`}
               >
                 {selected ? (
-                  <View className="size-2.5 rounded-full bg-teal" />
+                  <View className="size-2.5 rounded-full bg-paper" />
                 ) : null}
               </View>
             </Pressable>

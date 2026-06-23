@@ -1,6 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Text, useWindowDimensions, View } from 'react-native';
-import Animated, { FadeIn } from 'react-native-reanimated';
+import Animated, {
+  Extrapolation,
+  FadeIn,
+  interpolate,
+  type SharedValue,
+  useAnimatedStyle,
+} from 'react-native-reanimated';
 import { Icon } from '@/components/Icon';
 import { usePurchases } from '@/contexts/purchases';
 import { elevation } from '@/lib/elevation';
@@ -9,20 +15,57 @@ import type { IntroSlideData } from '@/lib/onboarding-intro';
 type IntroSlideProps = {
   slide: IntroSlideData;
   isActive: boolean;
+  // Position of this slide + the live scroll offset, so the slide can scale +
+  // fade as a function of its distance from the centered position.
+  index: number;
+  offsetX: SharedValue<number>;
+  pageWidth: number;
 };
 
 // One value-prop slide: a product-anchored hero visual + Bricolage headline +
-// subtitle. Entrance animation runs once the slide first becomes active (CC
-// `hasBeenActive` lifecycle) so it doesn't replay on swipe-back.
-export const IntroSlide = ({ slide, isActive }: IntroSlideProps) => {
+// subtitle. Two layers of motion: (1) a one-shot entrance fade when the slide
+// first becomes active (CC `hasBeenActive` lifecycle, doesn't replay on
+// swipe-back), and (2) a subtle scroll-coupled scale + fade so off-center
+// slides recede slightly as you swipe — a calm "card deck" feel that suits the
+// premium-health tone (gentler than CC's playful values).
+export const IntroSlide = ({
+  slide,
+  isActive,
+  index,
+  offsetX,
+  pageWidth,
+}: IntroSlideProps) => {
   const { width } = useWindowDimensions();
   const [seen, setSeen] = useState(isActive);
   useEffect(() => {
     if (isActive) setSeen(true);
   }, [isActive]);
 
+  // Scroll-coupled transform: at rest (centered) scale 1 / opacity 1; one page
+  // away, scale 0.92 / opacity 0.4. Clamped so far slides don't over-shrink.
+  const scrollStyle = useAnimatedStyle(() => {
+    const inputRange = [
+      (index - 1) * pageWidth,
+      index * pageWidth,
+      (index + 1) * pageWidth,
+    ];
+    const scale = interpolate(
+      offsetX.value,
+      inputRange,
+      [0.92, 1, 0.92],
+      Extrapolation.CLAMP,
+    );
+    const opacity = interpolate(
+      offsetX.value,
+      inputRange,
+      [0.4, 1, 0.4],
+      Extrapolation.CLAMP,
+    );
+    return { transform: [{ scale }], opacity };
+  });
+
   return (
-    <View style={{ width }} className="flex-1 px-7">
+    <Animated.View style={[{ width }, scrollStyle]} className="flex-1 px-7">
       <View className="flex-1 items-center justify-center">
         {seen ? (
           <Animated.View
@@ -59,7 +102,7 @@ export const IntroSlide = ({ slide, isActive }: IntroSlideProps) => {
           </View>
         )}
       </View>
-    </View>
+    </Animated.View>
   );
 };
 

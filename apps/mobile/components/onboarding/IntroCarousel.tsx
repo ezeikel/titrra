@@ -45,7 +45,8 @@ export const IntroCarousel = ({ onComplete }: IntroCarouselProps) => {
   );
 
   // Re-snap on rotation (width change) so the active slide stays centered.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: width-only resnap
+  // Depends on `width` only (NOT index) on purpose — a resnap should fire on
+  // rotation, never on every page change (that would fight the user's swipe).
   useEffect(() => {
     scrollRef.current?.scrollTo({ x: index * width, animated: false });
   }, [width]);
@@ -89,7 +90,14 @@ export const IntroCarousel = ({ onComplete }: IntroCarouselProps) => {
         onMomentumScrollEnd={onMomentumEnd}
       >
         {INTRO_SLIDES.map((slide, i) => (
-          <IntroSlide key={slide.visual} slide={slide} isActive={i === index} />
+          <IntroSlide
+            key={slide.visual}
+            slide={slide}
+            isActive={i === index}
+            index={i}
+            offsetX={offsetX}
+            pageWidth={width}
+          />
         ))}
       </Animated.ScrollView>
 

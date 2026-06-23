@@ -15,11 +15,15 @@ const base64ToBytes = (b64: string): Uint8Array => {
   return bytes;
 };
 
-// CC0 stylized low-poly human (Quaternius "Animated Human"). We render its rest
-// pose — no animations played. Loaded from the bundled .glb via expo-asset.
-const HUMAN_GLB = require('@/assets/models/human.glb');
+// PolyOne "Normal Humanoid Mannequin" (Fab Standard License) — a smooth matte
+// gender-neutral figure. The Fab-converted GLB has malformed skin transforms,
+// which collapse it into a blob when evaluated. We extract its intact,
+// already-Y-up POSITION data offline (scripts/bake-mannequin.mjs) into a plain
+// static mesh, so the app never evaluates the broken skeleton.
+const HUMAN_GLB = require('@/assets/models/mannequin-static.glb');
 
-const SKIN = '#d9c7b0';
+// Warm clay-grey — premium mannequin, not skin, not clinical.
+const SKIN = '#cdbfae';
 
 // Loads + normalizes the human GLB: centers it on the origin and scales it to a
 // target height, so the camera framing + anchor coordinates are stable
@@ -49,36 +53,34 @@ const useHumanModel = (targetHeight = 1.8) => {
         (gltf) => {
           if (cancelled) return;
           const root = gltf.scene;
-          // Recolor to the calm matte skin tone, preserving skinning: a
-          // SkinnedMesh keeps its material's skinning binding, so mutate the
-          // color in place rather than swapping the material instance.
+          // Pre-baked = a plain static mesh (no skeleton, already Y-up). Apply
+          // the calm matte clay material and rebuild normals (the extractor
+          // intentionally emits only positions + indices).
+          const mat = new THREE.MeshStandardMaterial({
+            color: new THREE.Color(SKIN),
+            roughness: 0.85,
+            metalness: 0,
+          });
           root.traverse((o) => {
             const mesh = o as THREE.Mesh;
             if (mesh.isMesh) {
-              const mat = mesh.material as THREE.MeshStandardMaterial;
-              if (mat && 'color' in mat) {
-                mat.color = new THREE.Color(SKIN);
-                if ('map' in mat) mat.map = null;
-                mat.roughness = 0.8;
-                mat.metalness = 0;
-                mat.needsUpdate = true;
-              }
+              mesh.geometry.computeVertexNormals();
+              mesh.material = mat;
             }
           });
-          // Normalize: center on origin, scale to targetHeight.
+          // Static non-skinned geometry → Box3 measures correctly. Center on
+          // origin + scale to targetHeight so the camera frames it head-on.
           const box = new THREE.Box3().setFromObject(root);
           const size = new THREE.Vector3();
           const center = new THREE.Vector3();
           box.getSize(size);
           box.getCenter(center);
           const scale = targetHeight / (size.y || 1);
-          root.scale.setScalar(scale);
-          root.position.set(
-            -center.x * scale,
-            -center.y * scale,
-            -center.z * scale,
-          );
-          setScene(root);
+          root.position.sub(center);
+          const wrapper = new THREE.Group();
+          wrapper.add(root);
+          wrapper.scale.setScalar(scale);
+          setScene(wrapper);
         },
         (err) => {
           console.warn('[HumanModel] GLTF parse failed:', err);

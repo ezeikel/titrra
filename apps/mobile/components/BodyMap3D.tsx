@@ -124,10 +124,17 @@ const Body = ({
   const { camera } = useThree();
   const recency = useMemo(() => recencyMap(recent), [recent]);
 
-  // FiberCanvas doesn't take a camera prop, so frame the body head-on here.
+  // FiberCanvas doesn't take a camera prop, so frame the body head-on here. A
+  // narrow FOV + pulled-back camera minimises perspective distortion (a wide
+  // FOV up close makes the body look foreshortened/viewed-from-above).
   useEffect(() => {
-    camera.position.set(0, 0, 2.6);
-    camera.lookAt(0, 0, 0);
+    const cam = camera as THREE.PerspectiveCamera;
+    cam.fov = 18;
+    // Slightly above + pulled well back, looking dead-level at the torso (the
+    // body spans y≈[-0.9, 0.9]; aim at y≈0 for a head-on standing view).
+    cam.position.set(0, 0, 7.5);
+    cam.lookAt(0, 0, 0);
+    cam.updateProjectionMatrix();
   }, [camera]);
 
   // Critically-damped follow toward the gesture target (frameloop is "always"

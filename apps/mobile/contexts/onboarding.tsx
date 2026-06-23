@@ -14,6 +14,7 @@ import {
   type SideEffectType,
   type WeightUnit,
 } from '@/lib/api';
+import { buildLadder } from '@titrra/types';
 import { type BodyShape, setStoredBodyShape } from '@/lib/body-shape';
 import { getDrugMeta } from '@/lib/glp1';
 
@@ -88,18 +89,15 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     const d = data;
 
     // Build the titration ladder client-side: current → goal (or current → top
-    // of the drug's ladder), guaranteeing the current dose is included.
+    // of the drug's ladder), guaranteeing the current dose is included. Shared
+    // with web via @titrra/types so both clients build the same ladder.
     let ladder: { doseMg: number[]; currentDose?: number } | undefined;
     if (d.currentDose != null && d.drug) {
-      const meta = getDrugMeta(d.drug);
-      const rungs = meta.doses.filter((mg) =>
-        d.goalDose != null
-          ? mg >= d.currentDose! && mg <= d.goalDose
-          : mg >= d.currentDose!,
+      const doses = buildLadder(
+        getDrugMeta(d.drug).doses,
+        d.currentDose,
+        d.goalDose,
       );
-      const doses = rungs.includes(d.currentDose)
-        ? rungs
-        : [d.currentDose, ...rungs].sort((a, b) => a - b);
       ladder = { doseMg: doses, currentDose: d.currentDose };
     }
 

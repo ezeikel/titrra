@@ -1,0 +1,10 @@
+# Smoke: the dev build installs, the bundle boots, and the app reaches its first
+# real screen past every dev overlay. Fast sanity check.
+appId: com.chewybytes.titrra.app.dev
+---
+- runFlow: launch.yaml
+# Whichever entry the app lands on — onboarding (fresh install) or the Today tab
+# (already onboarded) — Titrra branding / the log CTA is present. Assert one of
+# the stable anchors is visible.
+- assertVisible:
+    text: '.*(Titrra|Log today.s shot|injection site|Get started|Continue).*'

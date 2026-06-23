@@ -1,0 +1,84 @@
+# Onboarding flow: from a fresh install, walk the quiz to the Today screen.
+# Uses Skip on optional steps to stay resilient, and selects the required ones
+# (name, medication, dose, goal, body shape). Run on a FRESH install — if the
+# app is already onboarded it lands on Today and the early steps are skipped.
+appId: com.chewybytes.titrra.app.dev
+---
+- runFlow: launch.yaml
+
+# If already onboarded, the app is on the Today tab — assert + stop early.
+- runFlow:
+    when:
+      visible: '.*Log today.s shot.*'
+    commands:
+      - assertVisible: '.*Log today.s shot.*'
+
+# Otherwise run the quiz. The intro carousel → Skip into the questions.
+- tapOn:
+    text: '.*Skip.*'
+    optional: true
+
+# Name
+- runFlow:
+    when:
+      visible: '.*what should we call you.*'
+    commands:
+      - tapOn: 'Your name'
+      - inputText: 'Maestro'
+      - tapOn: '.*Continue.*'
+
+# Medication — pick the first option (Mounjaro).
+- tapOn:
+    text: '.*Mounjaro.*'
+    optional: true
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+
+# Current dose — pick a rung.
+- tapOn:
+    text: '2.5 mg'
+    optional: true
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+
+# Goal dose — pick a higher rung.
+- tapOn:
+    text: '10 mg'
+    optional: true
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+
+# Weight — skip.
+- tapOn:
+    text: '.*Skip.*'
+    optional: true
+
+# Side effects — continue with none.
+- tapOn:
+    text: '.*(None right now|Continue).*'
+    optional: true
+
+# Body shape — choose Feminine, then continue.
+- tapOn:
+    text: '.*Feminine.*'
+    optional: true
+- tapOn:
+    text: '.*Continue.*'
+    optional: true
+
+# Reminders — maybe later.
+- tapOn:
+    text: '.*(Maybe later|Skip).*'
+    optional: true
+
+# Building → reveal. Hand off to the app.
+- tapOn:
+    text: '.*See my plan.*'
+    optional: true
+
+# We should now be on the Today screen (post-onboarding or paywall→today).
+- assertVisible:
+    text: '.*(Log today.s shot|Log this week.s shot).*'

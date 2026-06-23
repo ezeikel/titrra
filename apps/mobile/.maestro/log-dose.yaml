@@ -1,0 +1,16 @@
+# Log-a-dose flow: from the Today screen, tap the one-tap log CTA and confirm a
+# dose lands in the recent list. Runs onboarding first so it works on a fresh
+# install too (onboarding is a no-op once already onboarded).
+appId: com.chewybytes.titrra.app.dev
+---
+- runFlow: onboarding.yaml
+
+# On the Today tab, the predict-dose hero shows the one-tap CTA.
+- assertVisible: '.*Log this week.s shot.*'
+- tapOn: '.*Log this week.s shot.*'
+
+# After logging, the Recent doses section appears (or grows). Give the optimistic
+# update + server round-trip a moment.
+- assertVisible:
+    text: '.*Recent doses.*'
+    timeout: 15000

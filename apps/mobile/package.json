@@ -30,7 +30,8 @@
     "check-types": "tsc --noEmit",
     "env:pull": "eas env:pull --environment development",
     "doctor": "npx react-doctor@latest",
-    "test": "echo \"no unit tests in apps/mobile yet\" && exit 0"
+    "test": "echo \"no unit tests in apps/mobile yet\" && exit 0",
+    "test:e2e": "maestro test .maestro"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^7.2.0",

@@ -15,12 +15,12 @@ const base64ToBytes = (b64: string): Uint8Array => {
   return bytes;
 };
 
-// PolyOne "Normal Humanoid Mannequin" (Fab Standard License) — a smooth matte
-// gender-neutral figure. The Fab-converted GLB has malformed skin transforms,
+// PolyOne "Normal Humanoid Mannequin" (Fab Standard License) — smooth matte
+// figures (male + female). The Fab-converted GLB has malformed skin transforms,
 // which collapse it into a blob when evaluated. We extract its intact,
 // already-Y-up POSITION data offline (scripts/bake-mannequin.mjs) into a plain
-// static mesh, so the app never evaluates the broken skeleton.
-const HUMAN_GLB = require('@/assets/models/mannequin-static.glb');
+// static mesh, so the app never evaluates the broken skeleton. Which figure to
+// load is passed in (see lib/body-shape.ts).
 
 // Warm clay-grey — premium mannequin, not skin, not clinical.
 const SKIN = '#cdbfae';
@@ -28,13 +28,13 @@ const SKIN = '#cdbfae';
 // Loads + normalizes the human GLB: centers it on the origin and scales it to a
 // target height, so the camera framing + anchor coordinates are stable
 // regardless of the model's authored units. Returns null while loading.
-const useHumanModel = (targetHeight = 1.8) => {
+const useHumanModel = (glb: number, targetHeight = 1.8) => {
   const [scene, setScene] = useState<THREE.Group | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const asset = Asset.fromModule(HUMAN_GLB);
+      const asset = Asset.fromModule(glb);
       await asset.downloadAsync();
       const uri = asset.localUri ?? asset.uri;
       // GLTFLoader's FileLoader uses fetch(), and RN's fetch does NOT support
@@ -92,22 +92,25 @@ const useHumanModel = (targetHeight = 1.8) => {
     return () => {
       cancelled = true;
     };
-  }, [targetHeight]);
+  }, [glb, targetHeight]);
 
   return scene;
 };
 
 // Renders the normalized human model (rest pose), centered on the origin.
-// onLoad fires with the loaded group so the parent can raycast site anchors
-// onto the actual mesh.
+// `glb` selects which baked mannequin to load (see lib/body-shape.ts). onLoad
+// fires with the loaded group so the parent can raycast site anchors onto the
+// actual mesh.
 export const HumanModel = ({
+  glb,
   height = 1.8,
   onLoad,
 }: {
+  glb: number;
   height?: number;
   onLoad?: (group: THREE.Group) => void;
 }) => {
-  const scene = useHumanModel(height);
+  const scene = useHumanModel(glb, height);
   useEffect(() => {
     if (scene && onLoad) onLoad(scene);
   }, [scene, onLoad]);

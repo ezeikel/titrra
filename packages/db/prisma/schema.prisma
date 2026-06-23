@@ -51,6 +51,15 @@ enum WeightUnit {
   LB
 }
 
+// Which body figure to show on the 3D injection-site map. Framed as a visual
+// preference ("body shape"), not a clinical/identity field. UNSPECIFIED = the
+// neutral default when the user skips.
+enum BodyShape {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
 enum SideEffectType {
   NAUSEA
   CONSTIPATION
@@ -77,12 +86,13 @@ enum ReminderType {
 // (web); a server-side mirror table is deferred until web + mobile need a
 // unified view (see spec §6).
 model User {
-  id                String   @id @default(cuid())
-  email             String?  @unique
-  healthSyncEnabled Boolean  @default(false)
-  units             Units    @default(METRIC)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                String    @id @default(cuid())
+  email             String?   @unique
+  healthSyncEnabled Boolean   @default(false)
+  units             Units     @default(METRIC)
+  bodyShape         BodyShape @default(UNSPECIFIED)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   medications    Medication[]
   weightLogs     WeightLog[]

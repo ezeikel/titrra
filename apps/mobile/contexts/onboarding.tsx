@@ -14,6 +14,7 @@ import {
   type SideEffectType,
   type WeightUnit,
 } from '@/lib/api';
+import { type BodyShape, setStoredBodyShape } from '@/lib/body-shape';
 import { getDrugMeta } from '@/lib/glp1';
 
 const ONBOARDED_KEY = 'titrra.onboarded';
@@ -31,6 +32,8 @@ export type OnboardingData = {
   weightUnit: WeightUnit;
   sideEffects: SideEffectType[];
   remindersOptIn: boolean;
+  // Which figure to show on the 3D injection-site map (visual preference).
+  bodyShape: BodyShape;
 };
 
 const EMPTY: OnboardingData = {
@@ -42,6 +45,7 @@ const EMPTY: OnboardingData = {
   weightUnit: 'KG',
   sideEffects: [],
   remindersOptIn: false,
+  bodyShape: 'UNSPECIFIED',
 };
 
 type OnboardingContextValue = {
@@ -113,6 +117,7 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
           ? { weight: d.currentWeight, unit: d.weightUnit }
           : undefined,
       sideEffects: d.sideEffects.length > 0 ? d.sideEffects : undefined,
+      bodyShape: d.bodyShape !== 'UNSPECIFIED' ? d.bodyShape : undefined,
     });
   }, [data]);
 
@@ -121,8 +126,11 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
       [ONBOARDED_KEY, 'true'],
       [NAME_KEY, data.name],
     ]);
+    // Persist the chosen body figure locally so the Today screen's 3D map shows
+    // the right mannequin immediately, before any network round-trip.
+    await setStoredBodyShape(data.bodyShape);
     setOnboarded(true);
-  }, [data.name]);
+  }, [data.name, data.bodyShape]);
 
   const value = useMemo(
     () => ({ data, set, reset, commit, onboarded, markOnboarded }),

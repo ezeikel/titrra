@@ -4,7 +4,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { DRUGS } from '@/lib/glp1';
 
-const TOTAL = 7;
+const TOTAL = 8;
 
 // The key config question. The chosen drug also determines form + schedule
 // (handled in commit() via getDrugMeta), so we don't need separate screens for

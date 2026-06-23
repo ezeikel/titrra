@@ -1,4 +1,5 @@
 import {
+  type BodyShape,
   type Drug,
   getDb,
   isDatabaseConfigured,
@@ -54,11 +55,18 @@ const VALID_SIDE_EFFECTS = new Set<SideEffectType>([
   'OTHER',
 ]);
 
+const VALID_BODY_SHAPES = new Set<BodyShape>([
+  'MALE',
+  'FEMALE',
+  'UNSPECIFIED',
+]);
+
 type OnboardingBody = {
   medication?: { drug?: string; form?: string; scheduleType?: string };
   ladder?: { doseMg: number[]; currentDose?: number };
   weight?: { weight: number; unit?: string };
   sideEffects?: string[];
+  bodyShape?: string;
 };
 
 export const POST = async (req: Request) => {
@@ -112,6 +120,13 @@ export const POST = async (req: Request) => {
         VALID_SIDE_EFFECTS.has(t as SideEffectType),
       )
     : [];
+
+  // Body-shape preference for the 3D map (visual only). Ignore unknown/absent;
+  // only persist an explicit MALE/FEMALE choice (UNSPECIFIED stays the default).
+  const bodyShape =
+    body.bodyShape && VALID_BODY_SHAPES.has(body.bodyShape as BodyShape)
+      ? (body.bodyShape as BodyShape)
+      : undefined;
 
   try {
     const db = getDb();
@@ -171,6 +186,14 @@ export const POST = async (req: Request) => {
             type: type as SideEffectType,
             severity: 2,
           })),
+        });
+      }
+
+      // 5. Body-shape preference (only when an explicit choice was made).
+      if (bodyShape && bodyShape !== 'UNSPECIFIED') {
+        await tx.user.update({
+          where: { id: user.id },
+          data: { bodyShape },
         });
       }
     });

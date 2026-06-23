@@ -4,7 +4,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import type { SideEffectType } from '@/lib/api';
 
-const TOTAL = 7;
+const TOTAL = 8;
 
 const OPTIONS: { type: SideEffectType; label: string }[] = [
   { type: 'NAUSEA', label: 'Nausea' },
@@ -20,7 +20,7 @@ const OPTIONS: { type: SideEffectType; label: string }[] = [
 const SideEffectsStep = () => {
   const router = useRouter();
   const { data, set } = useOnboarding();
-  const next = () => router.push('/(onboarding)/reminders');
+  const next = () => router.push('/(onboarding)/body');
 
   const toggle = (type: SideEffectType) => {
     const has = data.sideEffects.includes(type);

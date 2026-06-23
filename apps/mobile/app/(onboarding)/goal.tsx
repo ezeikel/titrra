@@ -5,7 +5,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { getDrugMeta } from '@/lib/glp1';
 
-const TOTAL = 7;
+const TOTAL = 8;
 
 const GoalStep = () => {
   const router = useRouter();

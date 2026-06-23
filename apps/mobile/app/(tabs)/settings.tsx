@@ -6,6 +6,7 @@ import { Icon } from '@/components/Icon';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { usePurchases } from '@/contexts/purchases';
 import { trackEvent } from '@/lib/analytics';
+import { type BodyShape, useBodyShape } from '@/lib/body-shape';
 import { elevation } from '@/lib/elevation';
 
 const Row = ({
@@ -57,6 +58,69 @@ const Row = ({
     )}
   </Pressable>
 );
+
+// Body-shape preference for the 3D injection-site map. Framed neutrally ("Body
+// shape" — which figure to show), never as a clinical/identity field. Three
+// options: the two mannequins + a neutral default.
+const BODY_SHAPE_OPTIONS: { value: BodyShape; label: string }[] = [
+  { value: 'MALE', label: 'Masc' },
+  { value: 'FEMALE', label: 'Fem' },
+  { value: 'UNSPECIFIED', label: 'Default' },
+];
+
+const BodyShapeCard = () => {
+  const { bodyShape, setBodyShape, loading } = useBodyShape();
+
+  return (
+    <View className="mt-6">
+      <Text className="mb-2 px-1 font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
+        Body shape
+      </Text>
+      <View
+        className="overflow-hidden rounded-3xl bg-paper p-4"
+        style={elevation.card}
+      >
+        <Text className="mb-3 font-sans text-[14px] text-muted">
+          Which body would you like to see on the injection-site map?
+        </Text>
+        <View className="flex-row gap-2">
+          {BODY_SHAPE_OPTIONS.map((opt) => {
+            const active = bodyShape === opt.value;
+            return (
+              <Pressable
+                key={opt.value}
+                disabled={loading}
+                onPress={() => {
+                  setBodyShape(opt.value);
+                  trackEvent('body_shape_set', {
+                    value: opt.value,
+                    source: 'settings',
+                  });
+                }}
+                accessibilityRole="button"
+                accessibilityState={{ selected: active }}
+                accessibilityLabel={opt.label}
+                className={`flex-1 items-center rounded-2xl border py-3 ${
+                  active
+                    ? 'border-teal bg-teal/10'
+                    : 'border-border bg-transparent active:bg-mist'
+                }`}
+              >
+                <Text
+                  className={`font-sans-semibold text-[14px] ${
+                    active ? 'text-teal' : 'text-ink'
+                  }`}
+                >
+                  {opt.label}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+    </View>
+  );
+};
 
 const Settings = () => {
   const router = useRouter();
@@ -119,6 +183,8 @@ const Settings = () => {
           }}
         />
       </View>
+
+      <BodyShapeCard />
     </ScreenScaffold>
   );
 };

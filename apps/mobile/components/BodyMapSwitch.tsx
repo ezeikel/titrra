@@ -1,6 +1,7 @@
 import { Component, type ReactNode } from 'react';
 import { BodyMap } from '@/components/BodyMap';
 import { BodyMap3D } from '@/components/BodyMap3D';
+import type { BodyShape } from '@/lib/body-shape';
 import type { InjectionSite, RecentDose } from '@/lib/rotation';
 
 // Feature flag for the 3D body map. Flip to false to ship the proven 2D Skia
@@ -13,6 +14,8 @@ type Props = {
   suggested: InjectionSite;
   recent?: RecentDose[];
   onSelect: (site: InjectionSite) => void;
+  /** Which mannequin the 3D map shows; ignored by the 2D fallback. */
+  bodyShape?: BodyShape;
 };
 
 // If the 3D Canvas (expo-gl / R3F) throws at runtime, fall back to the 2D map
@@ -29,7 +32,9 @@ class BodyMapErrorBoundary extends Component<
 
   render() {
     if (this.state.failed) {
-      const { children: _children, ...mapProps } = this.props;
+      // BodyMap (2D) doesn't take bodyShape — drop it alongside children.
+      const { children: _children, bodyShape: _bodyShape, ...mapProps } =
+        this.props;
       return <BodyMap {...mapProps} />;
     }
     return this.props.children;

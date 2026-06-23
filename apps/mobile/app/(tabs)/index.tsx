@@ -9,6 +9,7 @@ import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { Stepper } from '@/components/Stepper';
 import { trackEvent } from '@/lib/analytics';
+import { useBodyShape } from '@/lib/body-shape';
 import {
   type DoseRecord,
   type Drug,
@@ -60,6 +61,7 @@ const nearest = (target: number, options: number[]): number =>
 // pickers for the rare override. Persists via the web API → @titrra/db.
 const Today = () => {
   const router = useRouter();
+  const { bodyShape } = useBodyShape();
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [drug, setDrug] = useState<Drug | null>(null);
   const [loading, setLoading] = useState(true);
@@ -263,6 +265,7 @@ const Today = () => {
                   suggested={suggested}
                   recent={history}
                   onSelect={setSite}
+                  bodyShape={bodyShape}
                 />
               </View>
             </View>

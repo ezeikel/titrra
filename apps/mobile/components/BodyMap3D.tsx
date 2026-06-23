@@ -6,6 +6,11 @@ import * as THREE from 'three/webgpu';
 import { FiberCanvas, type FiberCanvasHandle } from '@/components/FiberCanvas';
 import { HumanModel } from '@/components/HumanModel';
 import {
+  type BodyModel,
+  type BodyShape,
+  bodyModelFor,
+} from '@/lib/body-shape';
+import {
   INJECTION_SITES,
   type InjectionSite,
   type RecentDose,
@@ -17,6 +22,8 @@ type BodyMap3DProps = {
   suggested: InjectionSite;
   recent?: RecentDose[];
   onSelect: (site: InjectionSite) => void;
+  /** Which mannequin to show (male / female / neutral default). */
+  bodyShape?: BodyShape;
 };
 
 // Brand palette (matches the 2D BodyMap + design tokens).
@@ -25,18 +32,13 @@ const TEAL_SOFT = '#4db6ac';
 const WARN = '#c98a2b';
 const IDLE = '#cbb89d';
 
-// Injection-site marker positions, computed OFFLINE by scanning the model mesh
-// at standard anatomical height fractions (belly ~60%, upper thigh ~42%, upper
-// arm ~70%) and snapping to the real skin surface — see scripts/bake-mannequin.
-// This is robust + scalable: the same scan produces correct sites for ANY
-// humanoid model (e.g. the female mannequin) with no hand-tuned coordinates.
-// Already in baked-mesh space: origin = body middle, ~1.8 tall, y up, +z front.
-import SITE_POSITIONS from '@/assets/models/mannequin-static-landmarks.json';
-
-const ANCHORS = SITE_POSITIONS as Record<
-  InjectionSite,
-  [number, number, number]
->;
+// Injection-site marker positions are computed OFFLINE per model by scanning the
+// mesh at standard anatomical height fractions (belly ~60%, upper thigh ~42%,
+// upper arm ~70%) and snapping to the real skin surface — see
+// scripts/bake-mannequin. Robust + scalable: the SAME scan produces correct
+// sites for ANY humanoid model (male, female) with no hand-tuned coordinates,
+// so each body figure carries its own landmarks (see lib/body-shape.ts).
+// Mesh space: origin = body middle, ~1.8 tall, y up, +z front.
 
 // Per-site "how recently used" → 0 (rested/never) .. 1 (used most recently).
 // Ported verbatim from BodyMap.tsx so 2D and 3D shade recency identically.
@@ -115,7 +117,11 @@ const Body = ({
   suggested,
   recent,
   rot,
-}: Omit<BodyMap3DProps, 'onSelect'> & { rot: RotRef }) => {
+  model,
+}: Omit<BodyMap3DProps, 'onSelect' | 'bodyShape'> & {
+  rot: RotRef;
+  model: BodyModel;
+}) => {
   const group = useRef<THREE.Group>(null);
   const { camera } = useThree();
   const recency = useMemo(() => recencyMap(recent), [recent]);
@@ -146,14 +152,14 @@ const Body = ({
   return (
     <group ref={group}>
       {/* Real mannequin (normalized to ~1.8 tall, centered). */}
-      <HumanModel height={1.8} />
+      <HumanModel glb={model.glb} height={1.8} />
 
       {/* Tappable injection-site anchors at the precomputed surface landmarks. */}
       {INJECTION_SITES.map((s) => (
         <SiteAnchor
           key={s}
           site={s}
-          position={ANCHORS[s]}
+          position={model.landmarks[s]}
           selected={s === selected}
           suggested={s === suggested}
           warmth={recency[s]}
@@ -173,7 +179,10 @@ export const BodyMap3D = ({
   suggested,
   recent,
   onSelect,
+  bodyShape = 'UNSPECIFIED',
 }: BodyMap3DProps) => {
+  // Resolve the chosen mannequin (GLB + its own baked landmarks).
+  const model = useMemo(() => bodyModelFor(bodyShape), [bodyShape]);
   // Rotation target lives in a ref so gesture mutations never re-render React;
   // the useFrame loop reads it each frame.
   const rot = useRef({ x: 0, y: 0 });
@@ -253,11 +262,15 @@ export const BodyMap3D = ({
               intensity={0.7}
               color="#dfeeec"
             />
+            {/* key on bodyShape so switching figures cleanly remounts the
+                model loader (reloads the right GLB). */}
             <Body
+              key={bodyShape}
               selected={selected}
               suggested={suggested}
               recent={recent}
               rot={rot}
+              model={model}
             />
           </FiberCanvas>
         </View>

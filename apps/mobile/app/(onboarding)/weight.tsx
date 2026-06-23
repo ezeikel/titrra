@@ -4,7 +4,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import type { WeightUnit } from '@/lib/api';
 
-const TOTAL = 7;
+const TOTAL = 8;
 
 const WeightStep = () => {
   const router = useRouter();

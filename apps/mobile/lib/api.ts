@@ -207,6 +207,7 @@ export const commitOnboarding = (input: {
   ladder?: { doseMg: number[]; currentDose?: number };
   weight?: { weight: number; unit?: WeightUnit };
   sideEffects?: SideEffectType[];
+  bodyShape?: 'MALE' | 'FEMALE';
 }): Promise<{ ok: true }> =>
   request('/api/onboarding', {
     method: 'POST',

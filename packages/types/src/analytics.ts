@@ -14,6 +14,7 @@ export type AnalyticsEvent =
   | 'side_effect_logged'
   | 'titration_step_added'
   | 'reminder_set'
+  | 'body_shape_set'
   | 'paywall_viewed'
   | 'paywall_dismissed'
   | 'purchase_started'

@@ -7,7 +7,7 @@ import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
 import { trackEvent } from '@/lib/analytics';
 
-const TOTAL = 7;
+const TOTAL = 8;
 
 const RemindersStep = () => {
   const router = useRouter();
@@ -34,7 +34,7 @@ const RemindersStep = () => {
 
   return (
     <OnboardingStep
-      step={7}
+      step={8}
       total={TOTAL}
       title="Want a nudge on shot day?"
       subtitle="A gentle reminder so your dose never sneaks up on you. You can change this any time."

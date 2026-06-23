@@ -20,14 +20,30 @@ const API_KEY = Platform.select({
   android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_KEY,
 });
 
+// The `development` variant (…app.dev) has NO RevenueCat app registered — RC
+// only has the prod (…app) and internal/preview (…app.internal) apps. So in dev
+// the .env.local keys are the PROD keys, whose bundle id (…app) mismatches the
+// dev bundle (…app.dev). Configuring RC anyway produces the noisy "offerings
+// could not be fetched from App Store Connect (or the StoreKit Configuration
+// file)" LogBox on the simulator (a StoreKit scheme config only applies when
+// launched from Xcode, not via expo-dev-client / simctl). Skip RC entirely in
+// dev so local + simulator testing stays clean; preview/production configure
+// normally. (Same pattern as go-unbeaten.)
+const RC_ENABLED =
+  (process.env.EXPO_PUBLIC_ENVIRONMENT ?? 'development') !== 'development';
+
 let configured = false;
 
 /**
- * Configure RevenueCat once at startup. No-ops when no key is set (local dev
- * before the dashboard exists) so the app never hard-depends on IAP.
+ * Configure RevenueCat once at startup. No-ops in dev (no RC app for the .dev
+ * bundle) or when no key is set, so the app never hard-depends on IAP.
  */
 export const configurePurchases = async (userId?: string): Promise<boolean> => {
   if (configured) return true;
+  if (!RC_ENABLED) {
+    // dev variant — IAP intentionally inert (no .dev RevenueCat app exists).
+    return false;
+  }
   if (!API_KEY) {
     console.warn(
       '[purchases] no RevenueCat key for',

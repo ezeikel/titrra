@@ -214,10 +214,15 @@ export const BodyMap3D = ({
       <p className="mt-1 font-semibold text-[14px] text-ink">
         {SITE_LABELS[selected]}
         {selected === suggested ? (
-          <span className="font-normal text-[13px] text-muted"> · suggested</span>
+          <span className="font-normal text-[13px] text-muted-foreground">
+            {' '}
+            · suggested
+          </span>
         ) : null}
       </p>
-      <p className="mt-0.5 text-[12px] text-muted/70">Drag to rotate · click a site</p>
+      <p className="mt-0.5 text-[12px] text-muted-foreground">
+        Drag to rotate · click a site
+      </p>
     </div>
   );
 };

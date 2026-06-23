@@ -1,9 +1,15 @@
+import { config } from '@fortawesome/fontawesome-svg-core';
+import '@fortawesome/fontawesome-svg-core/styles.css';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Geist_Mono, Inter } from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
+
+// We import the Font Awesome core CSS ourselves (above) so Next bundles it; tell
+// FA not to inject it at runtime (which would flash huge unstyled icons).
+config.autoAddCss = false;
 
 const inter = Inter({
   variable: '--font-inter',

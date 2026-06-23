@@ -98,8 +98,19 @@ const useHumanModel = (targetHeight = 1.8) => {
 };
 
 // Renders the normalized human model (rest pose), centered on the origin.
-export const HumanModel = ({ height = 1.8 }: { height?: number }) => {
+// onLoad fires with the loaded group so the parent can raycast site anchors
+// onto the actual mesh.
+export const HumanModel = ({
+  height = 1.8,
+  onLoad,
+}: {
+  height?: number;
+  onLoad?: (group: THREE.Group) => void;
+}) => {
   const scene = useHumanModel(height);
+  useEffect(() => {
+    if (scene && onLoad) onLoad(scene);
+  }, [scene, onLoad]);
   // Memoize the primitive so it isn't re-created each render.
   const primitive = useMemo(
     () => (scene ? <primitive object={scene} /> : null),

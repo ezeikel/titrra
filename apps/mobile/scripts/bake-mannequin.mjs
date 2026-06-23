@@ -118,3 +118,48 @@ const binHdr = Buffer.alloc(8); binHdr.writeUInt32LE(binOut.length,0); binHdr.wr
 
 writeFileSync(OUT, Buffer.concat([header, jsonHdr, jsonChunk, binHdr, binOut]));
 console.log('wrote', OUT, total, 'bytes');
+
+// ─── Injection-site landmarks ──────────────────────────────────────────────
+// Derive the 6 marker positions by scanning the (centered, Y-up, 1.8-tall)
+// geometry at standard anatomical HEIGHT FRACTIONS and snapping to the real
+// skin surface. No hand-tuned coordinates → robust + scales to any humanoid
+// model (e.g. the female mannequin). Writes <OUT-basename>-landmarks.json.
+const H = max[1] - min[1];
+const yAt = (f) => min[1] + f * H;
+// Front-facing surface point near a target x at a height fraction.
+const frontPoint = (yFrac, xTarget, band = 0.04) => {
+  const y = yAt(yFrac);
+  let best = null;
+  for (let i = 0; i < count; i++) {
+    const x = out[i * 3], vy = out[i * 3 + 1], z = out[i * 3 + 2];
+    if (Math.abs(vy - y) > band) continue;
+    if (Math.abs(x - xTarget) > 0.05) continue;
+    if (!best || z > best.z) best = { x, y: vy, z };
+  }
+  return best;
+};
+// Outermost (limb-edge) surface point on one side at a height fraction.
+const outerPoint = (yFrac, sign, band = 0.04) => {
+  const y = yAt(yFrac);
+  let best = null;
+  for (let i = 0; i < count; i++) {
+    const x = out[i * 3], vy = out[i * 3 + 1], z = out[i * 3 + 2];
+    if (Math.abs(vy - y) > band) continue;
+    if (sign > 0 ? x < 0.15 : x > -0.15) continue;
+    if (!best || (sign > 0 ? x > best.x : x < best.x)) best = { x, y: vy, z };
+  }
+  return best;
+};
+const r = (v, fb) => (v ? [+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)] : fb);
+// Fractions: belly ~60%, upper thigh ~42%, upper arm/deltoid ~70% of height.
+const landmarks = {
+  ABDOMEN_L: r(frontPoint(0.6, -0.09), [-0.05, 0.17, 0.12]),
+  ABDOMEN_R: r(frontPoint(0.6, 0.09), [0.05, 0.17, 0.12]),
+  THIGH_L: r(frontPoint(0.42, -0.1), [-0.09, -0.16, 0.09]),
+  THIGH_R: r(frontPoint(0.42, 0.1), [0.09, -0.16, 0.09]),
+  ARM_L: r(outerPoint(0.7, -1), [-0.3, 0.34, -0.06]),
+  ARM_R: r(outerPoint(0.7, 1), [0.3, 0.34, -0.06]),
+};
+const LANDMARKS_OUT = OUT.replace(/\.glb$/, '') + '-landmarks.json';
+writeFileSync(LANDMARKS_OUT, `${JSON.stringify(landmarks, null, 2)}\n`);
+console.log('wrote', LANDMARKS_OUT);

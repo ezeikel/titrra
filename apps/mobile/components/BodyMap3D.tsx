@@ -25,20 +25,18 @@ const TEAL_SOFT = '#4db6ac';
 const WARN = '#c98a2b';
 const IDLE = '#cbb89d';
 
-// Local anchor offsets on the body group (front of body = +Z; orbit to reach
-// the back of the same limbs). Mirrors lib/rotation L/R semantics — confirmed
-// visually on device. The whole group orbits, so anchors stay attached.
-// Anchors in the centered-model space (origin = body's middle, ~1.8 tall, y up,
-// +z toward viewer). Tuned visually against the Quaternius human; fine-tune on
-// device. L/R are the model's left/right (confirm orientation on first render).
-const ANCHORS: Record<InjectionSite, [number, number, number]> = {
-  ABDOMEN_L: [-0.11, 0.12, 0.22],
-  ABDOMEN_R: [0.11, 0.12, 0.22],
-  THIGH_L: [-0.11, -0.42, 0.18],
-  THIGH_R: [0.11, -0.42, 0.18],
-  ARM_L: [-0.27, 0.5, 0.16],
-  ARM_R: [0.27, 0.5, 0.16],
-};
+// Injection-site marker positions, computed OFFLINE by scanning the model mesh
+// at standard anatomical height fractions (belly ~60%, upper thigh ~42%, upper
+// arm ~70%) and snapping to the real skin surface — see scripts/bake-mannequin.
+// This is robust + scalable: the same scan produces correct sites for ANY
+// humanoid model (e.g. the female mannequin) with no hand-tuned coordinates.
+// Already in baked-mesh space: origin = body middle, ~1.8 tall, y up, +z front.
+import SITE_POSITIONS from '@/assets/models/mannequin-static-landmarks.json';
+
+const ANCHORS = SITE_POSITIONS as Record<
+  InjectionSite,
+  [number, number, number]
+>;
 
 // Per-site "how recently used" → 0 (rested/never) .. 1 (used most recently).
 // Ported verbatim from BodyMap.tsx so 2D and 3D shade recency identically.
@@ -60,11 +58,13 @@ type RotRef = RefObject<{ x: number; y: number }>;
 // hit-test — onClick fires only on a clean tap (so a drag-orbit never selects).
 const SiteAnchor = ({
   site,
+  position,
   selected,
   suggested,
   warmth,
 }: {
   site: InjectionSite;
+  position: [number, number, number];
   selected: boolean;
   suggested: boolean;
   warmth: number;
@@ -87,24 +87,20 @@ const SiteAnchor = ({
         : IDLE;
 
   return (
-    // renderOrder + depthTest off → markers always draw on top of the body so
-    // all 6 sites stay visible. userData.siteId is read by the tap raycaster
-    // (R3F's onClick can't fire on the RN wgpu canvas — see FiberCanvas).
-    <mesh
-      position={ANCHORS[site]}
-      renderOrder={10}
-      userData={{ siteId: site }}
-    >
-      <sphereGeometry args={[0.09, 24, 24]} />
+    // position comes from a surface raycast (see placeAnchors). userData.siteId
+    // is read by the tap raycaster (R3F's onClick can't fire on the wgpu canvas).
+    <mesh position={position} userData={{ siteId: site }}>
+      {/* Depth-tested (no renderOrder hack) so markers on the far side are
+          correctly hidden behind the body when you rotate away. */}
+      <sphereGeometry args={[0.05, 24, 24]} />
       <meshStandardMaterial
         ref={matRef}
         color={color}
         roughness={0.45}
         metalness={0}
-        depthTest={false}
         emissive={selected ? TEAL : suggested ? TEAL : WARN}
         emissiveIntensity={
-          selected ? 0.35 : suggested ? 0.5 : warmth > 0 ? warmth * 0.3 : 0
+          selected ? 0.4 : suggested ? 0.55 : warmth > 0 ? warmth * 0.3 : 0
         }
       />
     </mesh>
@@ -149,16 +145,15 @@ const Body = ({
 
   return (
     <group ref={group}>
-      {/* Real CC0 human model (normalized to height 1.8, centered on origin).
-          While it loads, the procedural fallback below keeps something on screen. */}
+      {/* Real mannequin (normalized to ~1.8 tall, centered). */}
       <HumanModel height={1.8} />
 
-      {/* tappable injection-site anchors — positioned in the centered-model
-          space (origin at the body's middle; y up, +z toward the viewer). */}
+      {/* Tappable injection-site anchors at the precomputed surface landmarks. */}
       {INJECTION_SITES.map((s) => (
         <SiteAnchor
           key={s}
           site={s}
+          position={ANCHORS[s]}
           selected={s === selected}
           suggested={s === suggested}
           warmth={recency[s]}

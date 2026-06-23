@@ -20,7 +20,10 @@ type RulerProps = {
 };
 
 const TICK_GAP = 18; // px between ticks
-const MINOR_PER_MAJOR = 1; // every value is a labelled major tick (discrete set)
+// A tick is "major" (tall + labelled) on whole numbers; half-steps (x.5) render
+// as short, unlabelled minor ticks. This keeps a fine 0.5 scroll resolution
+// without cramming/​overlapping every label (which made "71.5" wrap).
+const isMajorValue = (v: number) => Number.isInteger(v);
 
 // Horizontal drag-ruler for picking a value by sliding (Me+/Cal AI/Noom
 // pattern) — far lower friction than scanning a grid of chips. Snaps to the
@@ -91,8 +94,8 @@ export const Ruler = ({
           scrollEventThrottle={16}
           contentContainerStyle={{ paddingHorizontal: sidePad - 11 }}
         >
-          {values.map((v, i) => {
-            const isMajor = i % MINOR_PER_MAJOR === 0;
+          {values.map((v) => {
+            const isMajor = isMajorValue(v);
             const selected = v === value;
             return (
               <View
@@ -104,18 +107,28 @@ export const Ruler = ({
                   className={`w-[2px] rounded-full ${
                     selected ? 'bg-teal' : 'bg-border'
                   }`}
-                  style={{ height: isMajor ? 34 : 20 }}
+                  style={{ height: isMajor ? 34 : 18 }}
                 />
-                <Text
-                  className={`mt-1.5 text-[11px] ${
-                    selected
-                      ? 'font-sans-bold text-teal'
-                      : 'font-sans text-faint'
-                  }`}
-                  allowFontScaling={false}
-                >
-                  {v}
-                </Text>
+                {/* Label only whole-number ticks. The label can be wider than
+                    the 18px tick gap, so it overflows its cell on a single line,
+                    centered on the tick, instead of wrapping. */}
+                {isMajor ? (
+                  <Text
+                    numberOfLines={1}
+                    style={{ width: 40, marginLeft: (40 - TICK_GAP) / -2 }}
+                    className={`mt-1.5 text-center text-[11px] ${
+                      selected
+                        ? 'font-sans-bold text-teal'
+                        : 'font-sans text-faint'
+                    }`}
+                    allowFontScaling={false}
+                  >
+                    {v}
+                  </Text>
+                ) : (
+                  // Reserve the label row height so major/minor ticks align.
+                  <View className="mt-1.5 h-[14px]" />
+                )}
               </View>
             );
           })}

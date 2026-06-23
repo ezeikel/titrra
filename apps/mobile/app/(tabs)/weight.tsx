@@ -159,8 +159,9 @@ const Weight = () => {
               <Text className="font-sans-bold text-[12px] uppercase tracking-[2px] text-faint">
                 Log a weigh-in
               </Text>
-              {/* Segmented kg/lb */}
-              <View className="flex-row overflow-hidden rounded-xl bg-mist p-0.5">
+              {/* Segmented kg/lb — equal-width pills, centered, in a padded
+                  track so the selected pill has even inset on all sides. */}
+              <View className="flex-row rounded-xl bg-mist p-1">
                 {(['KG', 'LB'] as WeightUnit[]).map((u) => {
                   const selected = u === unit;
                   return (
@@ -173,7 +174,7 @@ const Weight = () => {
                       accessibilityRole="radio"
                       accessibilityState={{ selected }}
                       accessibilityLabel={`Unit ${u.toLowerCase()}`}
-                      className={`rounded-[10px] px-4 py-1.5 ${
+                      className={`min-w-[44px] items-center justify-center rounded-lg py-1.5 ${
                         selected ? 'bg-paper' : ''
                       }`}
                       style={selected ? elevation.card : undefined}

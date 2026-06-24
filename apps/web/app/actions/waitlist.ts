@@ -1,13 +1,12 @@
 'use server';
 
-// Waitlist capture stub. Validates the email and returns a typed result the
-// client form renders. TODO: persist (add a `Waitlist` model to packages/db
-// via `db:migrate`, or push to a Resend audience) and fire a confirmation
-// email. Kept side-effect-light on purpose so the landing page ships first.
+import { getDb, isDatabaseConfigured } from '@titrra/db';
 
-export type WaitlistResult =
-  | { ok: true }
-  | { ok: false; error: string };
+// Waitlist capture for the landing page. Persists to the `Waitlist` table
+// (DB-backed, like chunky-crayon's EmailSubscriber). Dedups on the unique
+// `email` via upsert so a re-submit is idempotent, not a duplicate row.
+
+export type WaitlistResult = { ok: true } | { ok: false; error: string };
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -18,21 +17,30 @@ export async function joinWaitlist(
   const email = String(formData.get('email') ?? '')
     .trim()
     .toLowerCase();
+  const source = String(formData.get('source') ?? 'landing') || 'landing';
 
   if (!email || !EMAIL_RE.test(email)) {
     return { ok: false, error: 'Enter a valid email address.' };
   }
 
+  if (!isDatabaseConfigured()) {
+    // No DB locally / misconfigured — don't silently drop the lead; surface a
+    // retry instead of pretending it saved.
+    return { ok: false, error: 'Something went wrong. Please try again.' };
+  }
+
   try {
-    // TODO: persist the signup. Options, in order of preference:
-    //   1. Resend Audience (RESEND_API_KEY) — zero schema, instant broadcast.
-    //   2. A `Waitlist` Prisma model (run `db:migrate` to add it) via
-    //      `getDb()` from '@titrra/db'.
-    // For now we accept and acknowledge so the funnel is live.
-    // eslint-disable-next-line no-console
-    console.info('[waitlist] signup', { email });
+    const db = getDb();
+    // Upsert: a repeat signup refreshes the row (updatedAt / source) instead of
+    // erroring on the unique email or duplicating the lead.
+    await db.waitlist.upsert({
+      where: { email },
+      update: { source },
+      create: { email, source },
+    });
     return { ok: true };
-  } catch {
+  } catch (error) {
+    console.error('[waitlist] signup failed', error);
     return { ok: false, error: 'Something went wrong. Please try again.' };
   }
 }

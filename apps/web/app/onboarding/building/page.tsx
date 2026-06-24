@@ -16,7 +16,7 @@ const STEPS = [
 // to the server happens, so the wait is real work, not theater. Mirrors mobile.
 const BuildingStep = () => {
   const router = useRouter();
-  const { commit, markOnboarded } = useOnboarding();
+  const { commit, markOnboarded, data } = useOnboarding();
   const [label, setLabel] = useState(STEPS[0]);
   const ran = useRef(false);
 
@@ -36,6 +36,9 @@ const BuildingStep = () => {
       let committed = true;
       try {
         await commit();
+        // The defining activation event — only on a successful commit with a
+        // chosen medication.
+        if (data.drug) trackEvent('medication_added', { drug: data.drug });
       } catch (err) {
         console.error('[onboarding] commit failed', err);
         committed = false;
@@ -50,14 +53,16 @@ const BuildingStep = () => {
       setTimeout(() => {
         clearInterval(ticker);
         router.replace(
-          committed ? '/onboarding/reveal' : '/onboarding/reveal?commitFailed=1',
+          committed
+            ? '/onboarding/reveal'
+            : '/onboarding/reveal?commitFailed=1',
         );
       }, wait);
     };
     run();
 
     return () => clearInterval(ticker);
-  }, [commit, markOnboarded, router]);
+  }, [commit, markOnboarded, router, data.drug]);
 
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-md flex-col items-center justify-center bg-white px-8">

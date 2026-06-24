@@ -64,6 +64,7 @@ const WeightScreen = () => {
       eyebrow="Progress"
       title="Weight"
       subtitle="Log your weight to track the trend over time."
+      disclaimer
     >
       <div className="rounded-3xl bg-white p-5 shadow-sm">
         <div className="flex items-center gap-3">

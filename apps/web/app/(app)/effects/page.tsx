@@ -80,6 +80,7 @@ const EffectsScreen = () => {
       eyebrow="Symptoms"
       title="Side effects"
       subtitle="Log what you're feeling and how strong it is — spot patterns over time."
+      disclaimer
     >
       <div className="rounded-3xl bg-white p-5 shadow-sm">
         <p className="text-[12px] font-bold uppercase tracking-[2px] text-muted-foreground">

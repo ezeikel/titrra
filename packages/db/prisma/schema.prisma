@@ -114,10 +114,10 @@ model Medication {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
 
-  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  titrationSteps  TitrationStep[]
-  doseLogs        DoseLog[]
-  reminders       Reminder[]
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  titrationSteps TitrationStep[]
+  doseLogs       DoseLog[]
+  reminders      Reminder[]
 
   @@index([userId, active])
   @@map("medications")
@@ -239,4 +239,20 @@ model Reminder {
   @@index([userId, enabled])
   @@index([medicationId])
   @@map("reminders")
+}
+
+// Pre-launch waitlist capture from the marketing/landing page. Mirrors the
+// chunky-crayon EmailSubscriber pattern (DB-persisted, dedup on email, capture
+// the source surface), but right-sized: Titrra has a single waitlist surface,
+// so no per-list/brand machinery. `email` is unique so a re-submit upserts
+// instead of duplicating. `source` is free-form ('landing-hero', 'footer', …).
+model Waitlist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  source    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@map("waitlist")
 }

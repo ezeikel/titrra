@@ -39,6 +39,7 @@ const DosesScreen = () => {
       eyebrow="History"
       title="Your doses"
       subtitle="Every shot you've logged — newest first."
+      disclaimer
     >
       {loading ? (
         <p className="text-[14px] text-muted-foreground">Loading…</p>

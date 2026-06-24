@@ -14,6 +14,11 @@ if (process.env.NEXT_PUBLIC_POSTHOG_KEY) {
     persistence: 'memory',
     debug: process.env.NODE_ENV === 'development',
   });
+
+  // Session-start event, parity with mobile (which fires app_opened on launch
+  // in app/_layout.tsx). This module runs once per full page load (not per SPA
+  // navigation), so it's the right place for a once-per-session signal.
+  posthog.capture('app_opened', { platform: 'web' });
 }
 
 Sentry.init({

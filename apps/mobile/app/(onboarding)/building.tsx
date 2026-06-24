@@ -19,7 +19,7 @@ const STEPS = [
 const BuildingStep = () => {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { commit } = useOnboarding();
+  const { commit, data } = useOnboarding();
   const [label, setLabel] = useState(STEPS[0]);
   const ran = useRef(false);
 
@@ -38,6 +38,9 @@ const BuildingStep = () => {
       let committed = true;
       try {
         await commit();
+        // The defining activation event — fire only on a successful commit and
+        // only when a medication was actually chosen.
+        if (data.drug) trackEvent('medication_added', { drug: data.drug });
       } catch (err) {
         // The atomic commit rolled back — nothing partial was saved. Carry the
         // failure to the reveal so it can offer a Retry instead of pretending
@@ -62,7 +65,7 @@ const BuildingStep = () => {
     run();
 
     return () => clearInterval(ticker);
-  }, [commit, router]);
+  }, [commit, router, data.drug]);
 
   // trackEvent on mount (separate effect so the commit effect stays single-run).
   useEffect(() => {

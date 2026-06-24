@@ -9,11 +9,14 @@ import type { InjectionSite } from '@/lib/rotation';
 const DEVICE_HEADER = 'x-titrra-device';
 
 // EXPO_PUBLIC_API_URL is the local-dev override; production falls back to the
-// deployed web app. Trailing slash trimmed so path joins are clean.
+// deployed web app. Use the CANONICAL host (www) — the apex titrra.com issues a
+// 308 redirect to www, and RN's fetch doesn't reliably re-POST across a 308, so
+// hitting www directly avoids a dropped body / wasted round-trip on every call.
+// Trailing slash trimmed so path joins are clean.
 const API_BASE = (
   process.env.EXPO_PUBLIC_API_URL ||
   process.env.EXPO_PUBLIC_APP_URL ||
-  'https://titrra.com'
+  'https://www.titrra.com'
 ).replace(/\/$/, '');
 
 export type DoseRecord = {

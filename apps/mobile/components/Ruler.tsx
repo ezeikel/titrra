@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
   ScrollView,
   Text,
-  useWindowDimensions,
   View,
 } from 'react-native';
 
@@ -36,18 +36,75 @@ export const Ruler = ({
   unit,
   decimals = 1,
 }: RulerProps) => {
-  const { width } = useWindowDimensions();
-  const sidePad = width / 2;
+  // The ruler lives inside a padded card, so its track is NARROWER than the
+  // screen. The side padding (which centers tick 0 under the pointer) MUST be
+  // half the TRACK width, not half the screen — using the screen width offsets
+  // the selected tick from the centre pointer. Measure the track on layout.
+  const [trackWidth, setTrackWidth] = useState(0);
+  const sidePad = trackWidth > 0 ? trackWidth / 2 - TICK_GAP / 2 : 0;
   const scrollRef = useRef<ScrollView>(null);
-  const lastIndex = useRef<number>(Math.max(0, values.indexOf(value)));
+  // The index the user is currently parked on (updated live by onScroll). Used
+  // to detect whether a `value` prop change originated from the user's own
+  // drag (skip repositioning) vs. an external change (reposition).
+  const dragIndex = useRef<number>(Math.max(0, values.indexOf(value)));
+  // True while the user is actively touching/scrolling the ruler — during which
+  // we must NEVER programmatically scrollTo (it fights the finger → lag).
+  const isDragging = useRef(false);
 
-  // Keep the ruler positioned on the current value (and when it changes
-  // externally, e.g. smart default loads).
+  // Whether we've done the one-time initial positioning yet. The first scroll
+  // must wait until the ScrollView content is actually measured (there can be
+  // hundreds of ticks) — onContentSizeChange is the reliable signal for that;
+  // an effect + requestAnimationFrame races the layout and lands short.
+  const didInitialScroll = useRef(false);
+
+  const onTrackLayout = useCallback((e: LayoutChangeEvent) => {
+    setTrackWidth(e.nativeEvent.layout.width);
+  }, []);
+
+  // Scroll the current value under the centre pointer. Bails while the user is
+  // dragging (we must never fight the finger) — that's the scroll lag.
+  const scrollToValue = useCallback(
+    (animated: boolean) => {
+      if (isDragging.current) return;
+      const idx = Math.max(0, values.indexOf(value));
+      dragIndex.current = idx;
+      scrollRef.current?.scrollTo({ x: idx * TICK_GAP, animated });
+    },
+    [value, values],
+  );
+
+  // Initial position needs BOTH the track measured (so sidePad is set) AND the
+  // content sized (so the target offset isn't clamped). These two layout events
+  // can arrive in either order, so we attempt the initial scroll from each and
+  // only succeed once both are ready (guarded by didInitialScroll + trackWidth).
+  const tryInitialScroll = useCallback(() => {
+    if (didInitialScroll.current || trackWidth === 0) return;
+    didInitialScroll.current = true;
+    // A short timeout (not just rAF) so the Fabric/New-Arch ScrollView's native
+    // node is fully laid out before we seek — an immediate/rAF scrollTo is a
+    // no-op there and leaves the ruler stuck at offset 0.
+    setTimeout(() => scrollToValue(false), 0);
+  }, [trackWidth, scrollToValue]);
+
+  const onContentSizeChange = useCallback(() => {
+    tryInitialScroll();
+  }, [tryInitialScroll]);
+
+  // Also attempt once the track width arrives (covers the order where content
+  // sized before the track was measured, so onContentSizeChange bailed).
   useEffect(() => {
+    tryInitialScroll();
+  }, [tryInitialScroll]);
+
+  // Reposition on EXTERNAL value changes (smart-default load, unit switch) —
+  // but skip if we're already parked on this index (the value changed *because*
+  // of the user's own scroll, so re-scrolling would stutter) or mid-drag.
+  useEffect(() => {
+    if (!didInitialScroll.current || isDragging.current) return;
     const idx = Math.max(0, values.indexOf(value));
-    scrollRef.current?.scrollTo({ x: idx * TICK_GAP, animated: false });
-    lastIndex.current = idx;
-  }, [value, values]);
+    if (idx === dragIndex.current) return;
+    scrollToValue(false);
+  }, [value, values, scrollToValue]);
 
   const onScroll = useCallback(
     (e: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -56,8 +113,8 @@ export const Ruler = ({
         values.length - 1,
         Math.max(0, Math.round(x / TICK_GAP)),
       );
-      if (idx !== lastIndex.current) {
-        lastIndex.current = idx;
+      if (idx !== dragIndex.current) {
+        dragIndex.current = idx;
         Haptics.selectionAsync();
         onChange(values[idx]);
       }
@@ -83,7 +140,7 @@ export const Ruler = ({
       </View>
 
       {/* Ruler track */}
-      <View className="relative w-full">
+      <View className="relative w-full" onLayout={onTrackLayout}>
         <ScrollView
           ref={scrollRef}
           horizontal
@@ -92,7 +149,26 @@ export const Ruler = ({
           decelerationRate="fast"
           onScroll={onScroll}
           scrollEventThrottle={16}
-          contentContainerStyle={{ paddingHorizontal: sidePad - 11 }}
+          // Mount-time position (Fabric honors this even when an early
+          // scrollTo() no-ops). Later changes are handled by the effects.
+          contentOffset={{
+            x: Math.max(0, values.indexOf(value)) * TICK_GAP,
+            y: 0,
+          }}
+          onContentSizeChange={onContentSizeChange}
+          // Suppress the external-reposition effect while the user owns the
+          // scroll position (begin drag → end of momentum), so it never fights
+          // the finger.
+          onScrollBeginDrag={() => {
+            isDragging.current = true;
+          }}
+          onScrollEndDrag={() => {
+            isDragging.current = false;
+          }}
+          onMomentumScrollEnd={() => {
+            isDragging.current = false;
+          }}
+          contentContainerStyle={{ paddingHorizontal: sidePad }}
         >
           {values.map((v) => {
             const isMajor = isMajorValue(v);

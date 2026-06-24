@@ -1,6 +1,7 @@
 {
   "$schema": "https://turbo.build/schema.json",
   "ui": "tui",
+  "globalEnv": ["FONTAWESOME_NPM_AUTH_TOKEN"],
   "tasks": {
     "transit": {
       "dependsOn": ["^transit"]

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
+import { trackEvent } from '@/lib/analytics';
 import {
   listSideEffects,
   logSideEffect,
@@ -60,6 +61,11 @@ const EffectsScreen = () => {
     setSaving(true);
     try {
       await logSideEffect({ type, severity });
+      trackEvent('side_effect_logged', {
+        type,
+        severity,
+        source: 'effects_tab',
+      });
       toast.success('Logged.');
       await load();
     } catch (e) {

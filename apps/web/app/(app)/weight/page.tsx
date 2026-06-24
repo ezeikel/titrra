@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
+import { trackEvent } from '@/lib/analytics';
 import {
   listWeights,
   logWeight,
@@ -47,6 +48,7 @@ const WeightScreen = () => {
     setSaving(true);
     try {
       await logWeight({ weight: n, unit });
+      trackEvent('weight_logged', { unit, source: 'weight_tab' });
       toast.success('Weight logged.');
       setValue('');
       await load();
@@ -82,7 +84,9 @@ const WeightScreen = () => {
                 key={u}
                 onClick={() => setUnit(u)}
                 className={`px-5 py-4 text-[14px] font-bold ${
-                  u === unit ? 'bg-teal text-white' : 'bg-white text-muted-foreground'
+                  u === unit
+                    ? 'bg-teal text-white'
+                    : 'bg-white text-muted-foreground'
                 }`}
               >
                 {u.toLowerCase()}

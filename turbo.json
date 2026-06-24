@@ -43,7 +43,11 @@
       "persistent": true
     },
     "check-types": {
-      "dependsOn": ["transit"]
+      // The generated Prisma client is gitignored, so it won't exist on a fresh
+      // CI checkout. tsc needs it (@titrra/db imports ./generated/prisma), so
+      // generate it first — otherwise `check-types` fails with "Cannot find
+      // module './generated/prisma/client'".
+      "dependsOn": ["transit", "@titrra/db#db:generate"]
     },
     "db:generate": {
       "cache": false,

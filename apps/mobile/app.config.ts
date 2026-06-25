@@ -181,6 +181,11 @@ export default ({ config }: ConfigContext): ExpoConfig => {
             deploymentTarget: '16.4',
           },
           android: {
+            // react-native-webgpu (3D body map) calls AHardwareBuffer_* APIs
+            // that are only available on API 26+. The default minSdk (24) makes
+            // the NDK mark them unavailable and the native build fails. WebGPU
+            // on Android requires 26 anyway, so pin it here.
+            minSdkVersion: 26,
             compileSdkVersion: 36,
             targetSdkVersion: 36,
             buildToolsVersion: '36.0.0',

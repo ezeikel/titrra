@@ -48,6 +48,9 @@
       "environment": "production",
       "distribution": "store",
       "developmentClient": false,
+      "android": {
+        "resourceClass": "large"
+      },
       "env": {
         "EXPO_PUBLIC_ENVIRONMENT": "production"
       },

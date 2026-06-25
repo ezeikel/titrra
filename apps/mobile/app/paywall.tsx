@@ -2,6 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Linking,
   Pressable,
   ScrollView,
   Text,
@@ -30,6 +31,13 @@ import { TIMING_RISE } from '@/lib/motion';
 import { PAYWALL_PERKS, PAYWALL_TIMELINE } from '@/lib/paywall';
 
 type PlanKey = 'annual' | 'monthly' | 'lifetime';
+
+// Apple Guideline 3.1.2(c): apps with auto-renewable subscriptions must show
+// functional Terms of Use (EULA) + Privacy Policy links INSIDE the app's
+// purchase flow (not just in App Store metadata). Canonical www host — the
+// apex 308-redirects (see lib/api.ts).
+const TERMS_URL = 'https://www.titrra.com/terms';
+const PRIVACY_URL = 'https://www.titrra.com/privacy';
 
 // Single clean tier (spec §4): $7.99/mo · $39.99/yr (hero, 3-day trial) ·
 // $59.99 lifetime. No weekly trap, no 10-SKU maze — honest pricing IS the
@@ -321,6 +329,33 @@ const Paywall = () => {
           >
             <Text className="font-sans text-[13px] text-muted">
               Maybe later
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Required by App Store Guideline 3.1.2(c): functional Terms of Use
+            (EULA) + Privacy Policy links in the purchase flow. */}
+        <View className="mt-2 flex-row items-center justify-center gap-5">
+          <Pressable
+            onPress={() => Linking.openURL(TERMS_URL)}
+            hitSlop={12}
+            accessibilityRole="link"
+            accessibilityLabel="Terms of Use"
+            className="px-2 py-1"
+          >
+            <Text className="font-sans text-[11px] text-faint underline">
+              Terms of Use
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => Linking.openURL(PRIVACY_URL)}
+            hitSlop={12}
+            accessibilityRole="link"
+            accessibilityLabel="Privacy Policy"
+            className="px-2 py-1"
+          >
+            <Text className="font-sans text-[11px] text-faint underline">
+              Privacy Policy
             </Text>
           </Pressable>
         </View>

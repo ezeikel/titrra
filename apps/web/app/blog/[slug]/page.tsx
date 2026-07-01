@@ -17,9 +17,16 @@ import { siteUrl } from '@/lib/site';
 // biome-ignore lint/suspicious/noExplicitAny: Sanity documents are loosely typed
 type Post = any;
 
+// Cache Components requires generateStaticParams to return ≥1 entry. When
+// Sanity is unconfigured (CI / preview without env) or has no posts yet, return
+// a sentinel slug that resolves to notFound() — it never renders a real page,
+// it just satisfies the build-time validator.
+const PLACEHOLDER_SLUG = '__no_posts__';
+
 export async function generateStaticParams() {
-  if (!isSanityConfigured) return [];
+  if (!isSanityConfigured) return [{ slug: PLACEHOLDER_SLUG }];
   const slugs = await client.fetch<string[]>(postSlugsQuery);
+  if (slugs.length === 0) return [{ slug: PLACEHOLDER_SLUG }];
   return slugs.map((slug) => ({ slug }));
 }
 
@@ -27,7 +34,7 @@ async function getPost(slug: string): Promise<Post | null> {
   'use cache';
   cacheLife('hours');
   cacheTag('blog-posts', `blog-post-${slug}`);
-  if (!isSanityConfigured) return null;
+  if (!isSanityConfigured || slug === PLACEHOLDER_SLUG) return null;
   return client.fetch(postBySlugQuery, { slug });
 }
 

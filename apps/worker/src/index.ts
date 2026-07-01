@@ -1,0 +1,60 @@
+// Sentry must be imported first — it patches the runtime on init, so this
+// import has to stay above the others. The ignore stops Biome's import sorter
+// from alphabetising it back down.
+// biome-ignore assist/source/organizeImports: Sentry must be imported first
+import { Sentry } from './instrument.js';
+import { serve } from '@hono/node-server';
+import { type Context, Hono } from 'hono';
+import { logger } from 'hono/logger';
+
+// Titrra content worker. Runs on the shared Hetzner box (port 3070) as the
+// `titrra-worker` systemd service. Its first job is AI blog generation for the
+// SEO engine; image-gen / AI-UGC land here later. Env is loaded by tsx's
+// --env-file locally and by systemd's EnvironmentFile on the box.
+
+const app = new Hono();
+app.use('*', logger());
+
+app.onError((err, c) => {
+  console.error(`[onError] ${c.req.method} ${c.req.path}:`, err);
+  Sentry.captureException(err);
+  return c.json(
+    { error: err instanceof Error ? err.message : 'Internal server error' },
+    500,
+  );
+});
+
+// Bearer auth for the privileged endpoints — only trusted callers (Vercel
+// cron, the web app) may trigger generation. Sent as
+// `Authorization: Bearer <WORKER_SECRET>`. Unset secret = open (local dev).
+// /health stays unauthenticated + lightweight.
+const bearerAuth = async (
+  c: Context,
+  next: () => Promise<void>,
+): Promise<Response | void> => {
+  const secret = process.env.WORKER_SECRET;
+  if (!secret) return next();
+  if (c.req.header('authorization') !== `Bearer ${secret}`) {
+    return c.json({ error: 'Unauthorized' }, 401);
+  }
+  return next();
+};
+app.use('/generate/*', bearerAuth);
+app.use('/publish/*', bearerAuth);
+
+app.get('/health', (c) => c.json({ status: 'ok', service: 'titrra-worker' }));
+
+// POST /generate/blog — draft a GLP-1 blog post into Sanity. Wired in the
+// Sanity/blog phase; stubbed here so the scaffold + deploy are verifiable
+// before the pipeline lands.
+app.post('/generate/blog', (c) =>
+  c.json(
+    { error: 'not_implemented', detail: 'blog pipeline not wired yet' },
+    501,
+  ),
+);
+
+const port = parseInt(process.env.PORT ?? '3070', 10);
+serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, () => {
+  console.log(`[titrra-worker] listening on http://0.0.0.0:${port}`);
+});

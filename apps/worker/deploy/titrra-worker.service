@@ -1,0 +1,17 @@
+[Unit]
+Description=Titrra Worker
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/titrra/apps/worker
+EnvironmentFile=/opt/titrra/apps/worker/.env
+# No xvfb wrapper — unlike chunky-crayon-worker, this worker has no Playwright.
+ExecStart=/root/.bun/bin/bun run src/index.ts
+Restart=always
+RestartSec=5
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

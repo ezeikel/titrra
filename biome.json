@@ -187,6 +187,16 @@
           }
         }
       }
+    },
+    {
+      "includes": ["apps/worker/**"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noConsole": "off"
+          }
+        }
+      }
     }
   ],
   "assist": {

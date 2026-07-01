@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { FadeIn, StaggerChildren, StaggerItem } from '@/components/motion';
 
 type Prop = {
   title: string;
@@ -79,20 +80,22 @@ const PROPS: Prop[] = [
 const ValueProps = () => (
   <section id="features" className="border-y border-border bg-white">
     <div className="mx-auto max-w-5xl px-4 py-20 sm:py-24">
-      <span className="eyebrow block text-center text-teal-deep">
-        Built for the routine, not the calories
-      </span>
-      <h2 className="font-heading mx-auto mt-4 max-w-2xl text-balance text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-        Everything your weight-loss shot needs. Nothing it doesn&apos;t.
-      </h2>
-      <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
-        Generic food apps focus on calories. Reminder apps focus on alarms.
-        Titrra is built for the shot, the sites, the ladder and the side effects
-        — the things that actually shape your GLP-1 journey.
-      </p>
-      <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <FadeIn>
+        <span className="eyebrow block text-center text-teal-deep">
+          Built for the routine, not the calories
+        </span>
+        <h2 className="font-heading mx-auto mt-4 max-w-2xl text-balance text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Everything your weight-loss shot needs. Nothing it doesn&apos;t.
+        </h2>
+        <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
+          Generic food apps focus on calories. Reminder apps focus on alarms.
+          Titrra is built for the shot, the sites, the ladder and the side
+          effects — the things that actually shape your GLP-1 journey.
+        </p>
+      </FadeIn>
+      <StaggerChildren className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {PROPS.map((p) => (
-          <div
+          <StaggerItem
             key={p.title}
             className="rounded-2xl border border-border bg-sand p-6 transition hover:border-teal/40 hover:shadow-sm"
           >
@@ -103,9 +106,9 @@ const ValueProps = () => (
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {p.body}
             </p>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerChildren>
     </div>
   </section>
 );

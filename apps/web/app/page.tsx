@@ -3,6 +3,7 @@ import FinalCta from '@/components/FinalCta';
 import Hero from '@/components/Hero';
 import HowItWorks from '@/components/HowItWorks';
 import JsonLd from '@/components/JsonLd';
+import Pricing from '@/components/Pricing';
 import SiteFooter from '@/components/SiteFooter';
 import SiteNav from '@/components/SiteNav';
 import ValueProps from '@/components/ValueProps';
@@ -20,6 +21,7 @@ const HomePage = () => (
       <Hero />
       <ValueProps />
       <HowItWorks />
+      <Pricing />
       <Faq />
       <FinalCta />
     </main>

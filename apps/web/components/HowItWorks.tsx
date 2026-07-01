@@ -1,3 +1,5 @@
+import { FadeIn, StaggerChildren, StaggerItem } from '@/components/motion';
+
 const STEPS = [
   {
     step: '1',
@@ -19,15 +21,17 @@ const STEPS = [
 const HowItWorks = () => (
   <section id="how" className="bg-sand">
     <div className="mx-auto max-w-5xl px-4 py-20 sm:py-24">
-      <span className="eyebrow block text-center text-teal-deep">
-        How it works
-      </span>
-      <h2 className="font-heading mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
-        Less mental load. One place for everything.
-      </h2>
-      <div className="mt-14 grid gap-8 sm:grid-cols-3">
+      <FadeIn>
+        <span className="eyebrow block text-center text-teal-deep">
+          How it works
+        </span>
+        <h2 className="font-heading mt-4 text-center text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          Less mental load. One place for everything.
+        </h2>
+      </FadeIn>
+      <StaggerChildren className="mt-14 grid gap-8 sm:grid-cols-3">
         {STEPS.map((s) => (
-          <div key={s.step} className="relative">
+          <StaggerItem key={s.step} className="relative">
             <div className="flex size-10 items-center justify-center rounded-full bg-teal font-bold text-white">
               {s.step}
             </div>
@@ -35,9 +39,9 @@ const HowItWorks = () => (
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {s.body}
             </p>
-          </div>
+          </StaggerItem>
         ))}
-      </div>
+      </StaggerChildren>
     </div>
   </section>
 );

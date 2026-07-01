@@ -79,18 +79,65 @@ enum ReminderType {
   WATER
 }
 
+// ─── Billing enums ───────────────────────────────────────────────────────────
+
+// Which provider a subscription row came from. Both write to the same
+// Subscription table, keyed to the same User — the DB is the source of truth.
+enum SubscriptionPlatform {
+  STRIPE
+  REVENUECAT
+}
+
+// Titrra is single-tier (titrra_pro), so plan = the billing period. LIFETIME is
+// a one-time non-consumable that grants access with no renewal.
+enum BillingPeriod {
+  MONTHLY
+  ANNUAL
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  EXPIRED
+  PAUSED
+  INCOMPLETE
+  UNPAID
+}
+
+// Append-only audit log event types — one row per meaningful billing event so
+// cross-provider bugs are debuggable.
+enum SubscriptionEventType {
+  TRIAL_STARTED
+  SUBSCRIPTION_STARTED
+  RENEWAL_SUCCESS
+  RENEWAL_FAILED
+  CANCELLATION_SCHEDULED
+  CANCELLED
+  REACTIVATED
+  BILLING_ISSUE_DETECTED
+  EXPIRED
+  TRANSFERRED
+  REFUNDED
+}
+
 // ─── Models ──────────────────────────────────────────────────────────────────
 
-// Anonymous-first: email is nullable so a user can track without an account
-// and claim later. Subscription state lives in RevenueCat (mobile) / Stripe
-// (web); a server-side mirror table is deferred until web + mobile need a
-// unified view (see spec §6).
+// Anonymous-first: email is nullable so a user can track without an account and
+// claim later. Entitlement is the DB source of truth: both Stripe (web) and
+// RevenueCat (mobile) attach subscriptions to this same User.id, and
+// "is Pro now?" is computed from the Subscription rows (no denormalised flag).
 model User {
   id                String    @id @default(cuid())
   email             String?   @unique
   healthSyncEnabled Boolean   @default(false)
   units             Units     @default(METRIC)
   bodyShape         BodyShape @default(UNSPECIFIED)
+  // Provider linkage (the entitlement itself lives in Subscription).
+  stripeCustomerId  String?
+  revenuecatUserId  String?   @unique
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -99,6 +146,7 @@ model User {
   sideEffectLogs SideEffectLog[]
   intakeLogs     IntakeLog[]
   reminders      Reminder[]
+  subscriptions  Subscription[]
 
   @@map("users")
 }
@@ -255,4 +303,80 @@ model Waitlist {
 
   @@index([createdAt])
   @@map("waitlist")
+}
+
+// ─── Billing (DB = entitlement source of truth) ──────────────────────────────
+
+// One row per subscription per platform. "Is this user Pro right now?" is
+// computed from these rows (status ACTIVE/TRIALING, or PAST_DUE within grace,
+// or CANCELLED before currentPeriodEnd) — never stored as a boolean. Both the
+// Stripe and RevenueCat webhooks write here, discriminated by `platform`.
+model Subscription {
+  id                   String               @id @default(cuid())
+  userId               String
+  platform             SubscriptionPlatform @default(STRIPE)
+  // Stripe subscription id OR the RC event/transaction id — unique per provider.
+  externalId           String               @unique
+  // Kept for the Stripe customer.subscription.* webhook lookups.
+  stripeSubscriptionId String?              @unique
+  billingPeriod        BillingPeriod
+  status               SubscriptionStatus
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  trialStart           DateTime?
+  trialEnd             DateTime?
+  cancelledAt          DateTime?
+  gracePeriodEnd       DateTime?
+  // e.g. "titrra_pro_monthly_v1" — the store product id.
+  storeProductId       String?
+  metadata             Json?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  user   User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events SubscriptionEvent[]
+
+  @@index([userId])
+  @@index([platform, externalId])
+  @@map("subscriptions")
+}
+
+// Append-only audit log so a cross-provider entitlement bug is debuggable.
+model SubscriptionEvent {
+  id              String                @id @default(cuid())
+  subscriptionId  String?
+  userId          String
+  eventType       SubscriptionEventType
+  platform        SubscriptionPlatform
+  // Provider event id, deduped so retried webhooks don't double-log.
+  externalEventId String?               @unique
+  previousStatus  SubscriptionStatus?
+  newStatus       SubscriptionStatus?
+  rawPayload      Json?
+  createdAt       DateTime              @default(now())
+
+  subscription Subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([subscriptionId])
+  @@map("subscription_events")
+}
+
+// Idempotency guard for the RevenueCat webhook (keyed on the RC event id).
+model WebhookEvent {
+  id          String               @id
+  platform    SubscriptionPlatform
+  eventType   String
+  processedAt DateTime             @default(now())
+
+  @@map("webhook_events")
+}
+
+// Idempotency guard for the Stripe webhook (keyed on the Stripe event id).
+model StripeWebhookEvent {
+  id          String   @id
+  type        String
+  processedAt DateTime @default(now())
+
+  @@map("stripe_webhook_events")
 }

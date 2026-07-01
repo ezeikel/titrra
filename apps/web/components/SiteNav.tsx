@@ -35,7 +35,7 @@ const SiteNav = () => (
         href="#top"
         className="rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-deep"
       >
-        Get early access
+        Get the app
       </a>
     </nav>
   </header>

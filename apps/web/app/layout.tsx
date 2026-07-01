@@ -3,7 +3,13 @@ import '@fortawesome/fontawesome-svg-core/styles.css';
 import { Analytics } from '@vercel/analytics/next';
 import type { Metadata, Viewport } from 'next';
 import { Bricolage_Grotesque, Geist_Mono, Inter } from 'next/font/google';
+import JsonLd from '@/components/JsonLd';
 import { Toaster } from '@/components/ui/sonner';
+import {
+  organizationSchema,
+  softwareApplicationSchema,
+  websiteSchema,
+} from '@/lib/seo/schema';
 import { SITE_URL } from '@/lib/site';
 import './globals.css';
 
@@ -63,16 +69,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0d9488',
-};
-
-const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'Titrra',
-  url: SITE_URL,
-  description:
-    'The focused GLP-1 tracker: dose logging, injection-site rotation, titration ladder, side effects and weight.',
+  themeColor: '#0e7c7b',
 };
 
 export default function RootLayout({
@@ -86,11 +83,9 @@ export default function RootLayout({
       className={`${inter.variable} ${bricolage.variable} ${geistMono.variable} bg-background`}
     >
       <head>
-        <script
-          type="application/ld+json"
-          // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
-        />
+        <JsonLd data={organizationSchema} />
+        <JsonLd data={websiteSchema} />
+        <JsonLd data={softwareApplicationSchema()} />
       </head>
       <body className="font-sans antialiased">
         {children}

@@ -14,6 +14,40 @@ export const getDeviceId = (req: Request): string | null => {
   return id && id.length > 0 ? id : null;
 };
 
+// Resolve (or create) the anonymous User for a device, WITHOUT the default
+// medication side-effect. This is the identity bridge for billing: both the
+// Stripe checkout (client_reference_id) and the RevenueCat webhook attach
+// entitlement to this same User.id, and the mobile app sets RC's appUserID to
+// it (via /api/me) so RC events reconcile with the DB user. No NextAuth needed.
+export const resolveUser = async (deviceId: string) => {
+  const db = getDb();
+  const deviceEmail = `device:${deviceId}`;
+  return db.user
+    .upsert({
+      where: { email: deviceEmail },
+      update: {},
+      create: { email: deviceEmail },
+    })
+    .catch(async (err) => {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2002') {
+        return db.user.findUniqueOrThrow({ where: { email: deviceEmail } });
+      }
+      throw err;
+    });
+};
+
+// The single server-side identity read all billing code flows through. Returns
+// the DB User.id for the request's device, or null if no device header is
+// present. (A NextAuth session branch would be added here later; for now the
+// device id IS the identity.)
+export const getUserId = async (req: Request): Promise<string | null> => {
+  const deviceId = getDeviceId(req);
+  if (!deviceId) return null;
+  const user = await resolveUser(deviceId);
+  return user.id;
+};
+
 export const resolveUserAndMedication = async (deviceId: string) => {
   const db = getDb();
   const deviceEmail = `device:${deviceId}`;

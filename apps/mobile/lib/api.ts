@@ -216,3 +216,10 @@ export const commitOnboarding = (input: {
     method: 'POST',
     body: JSON.stringify(input),
   });
+
+// Fetch the DB User.id for this device — the identity bridge. RevenueCat's
+// appUserID is anchored to this so RC webhook events reconcile with the same
+// anonymous user Stripe web checkout attaches to (DB = entitlement source of
+// truth). See app/api/me/route.ts.
+export const getMe = (): Promise<{ userId: string }> =>
+  request('/api/me', { method: 'GET' });

@@ -13,6 +13,7 @@ import type {
   PurchasesOffering,
   PurchasesPackage,
 } from 'react-native-purchases';
+import { getMe } from '@/lib/api';
 import {
   configurePurchases,
   findPackage,
@@ -100,10 +101,14 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
     let cancelled = false;
 
     const boot = async () => {
-      // TODO: anchor appUserID to the device/anon user id once auth exists, so
-      // an anonymous purchase reconciles with the backend (see chunky-crayon's
-      // SubscriptionContext). For the skeleton we configure anonymously.
-      const ok = await configurePurchases();
+      // Anchor RC's appUserID to the DB User.id so an anonymous purchase
+      // reconciles with the backend (DB = entitlement source of truth). Fetch
+      // it best-effort; if the identity call fails (offline), fall back to an
+      // anonymous configure so the paywall still works.
+      const userId = await getMe()
+        .then((r) => r.userId)
+        .catch(() => undefined);
+      const ok = await configurePurchases(userId);
       if (!ok) {
         // No SDK key (dev / not configured) — not an error, just no IAP. Ready
         // with no offering; screens treat isPro=false as "free tier".

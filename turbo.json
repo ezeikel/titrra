@@ -34,7 +34,13 @@
         "EXPO_PUBLIC_REVENUECAT_ANDROID_KEY",
         "NEXT_PUBLIC_VERCEL_ENV",
         "VERCEL_ENV",
-        "VERCEL_URL"
+        "VERCEL_URL",
+        "WORKER_URL",
+        "WORKER_SECRET",
+        "CRON_SECRET",
+        "NEXT_PUBLIC_SANITY_PROJECT_ID",
+        "NEXT_PUBLIC_SANITY_DATASET",
+        "NEXT_PUBLIC_SANITY_API_VERSION"
       ]
     },
     "dev": {

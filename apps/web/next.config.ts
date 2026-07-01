@@ -12,6 +12,12 @@ const nextConfig: NextConfig = {
   // Shared packages ship as TypeScript source (also consumed by the Expo app
   // via Metro) — Next compiles them as part of the app build.
   transpilePackages: ['@titrra/db', '@titrra/types'],
+  images: {
+    // Blog images are served from the Sanity CDN.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'cdn.sanity.io', pathname: '/**' },
+    ],
+  },
 };
 
 export default withSentryConfig(nextConfig, {

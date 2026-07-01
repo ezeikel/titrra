@@ -10,6 +10,7 @@ export default function robots(): MetadataRoute.Robots {
         disallow: [
           '/app/', // authenticated tracker shell — never index
           '/onboarding/', // funnel, not a landing surface
+          '/studio/', // embedded Sanity CMS
           '/api/',
           '/_next/',
         ],

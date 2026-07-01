@@ -6,6 +6,7 @@ import { Sentry } from './instrument.js';
 import { serve } from '@hono/node-server';
 import { type Context, Hono } from 'hono';
 import { logger } from 'hono/logger';
+import { runBlogCron } from './blog/pipeline.js';
 
 // Titrra content worker. Runs on the shared Hetzner box (port 3070) as the
 // `titrra-worker` systemd service. Its first job is AI blog generation for the
@@ -44,15 +45,16 @@ app.use('/publish/*', bearerAuth);
 
 app.get('/health', (c) => c.json({ status: 'ok', service: 'titrra-worker' }));
 
-// POST /generate/blog — draft a GLP-1 blog post into Sanity. Wired in the
-// Sanity/blog phase; stubbed here so the scaffold + deploy are verifiable
-// before the pipeline lands.
-app.post('/generate/blog', (c) =>
-  c.json(
-    { error: 'not_implemented', detail: 'blog pipeline not wired yet' },
-    501,
-  ),
-);
+// POST /generate/blog — draft a GLP-1 blog post into Sanity. Fire-and-forget:
+// ack immediately (the caller — Vercel cron — has a short function budget) and
+// run the generation in the background. The post lands as a DRAFT for review.
+app.post('/generate/blog', (c) => {
+  console.log('[/generate/blog] kickoff');
+  runBlogCron().catch((err) =>
+    console.error('[/generate/blog] uncaught:', err),
+  );
+  return c.json({ ok: true, accepted: true }, 202);
+});
 
 const port = parseInt(process.env.PORT ?? '3070', 10);
 serve({ fetch: app.fetch, port, hostname: '0.0.0.0' }, () => {

@@ -1,14 +1,6 @@
-// Static paywall copy + trust signals. Kept out of components so the numbers
-// are easy to update as real reviews land. COMPLIANCE: rating + count only —
-// no outcome testimonials, no health claims.
-
-export const PAYWALL_TRUST = {
-  rating: 4.9,
-  // Honest, modest starting number — bump as real App Store reviews accrue.
-  count: 320,
-  // Initials shown in the overlapping avatar cluster (no real PII).
-  initials: ['SR', 'JM', 'AL', 'KP'],
-};
+// Static paywall copy. COMPLIANCE: no fabricated ratings/review counts/
+// testimonials and no health-outcome claims. Honest trust signals live in
+// components/paywall/TrustStrip.tsx.
 
 export const PAYWALL_PERKS = [
   'Titration ladder + step-up reminders',

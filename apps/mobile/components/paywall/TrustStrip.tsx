@@ -1,42 +1,30 @@
 import { Text, View } from 'react-native';
 import { Icon } from '@/components/Icon';
-import { PAYWALL_TRUST } from '@/lib/paywall';
 
-// Social proof — overlapping initials cluster + star rating + review count.
-// COMPLIANCE: no testimonials / outcome claims, just rating + count.
-export const TrustStrip = () => {
-  const { rating, count, initials } = PAYWALL_TRUST;
-  return (
-    <View className="flex-row items-center justify-center gap-3">
-      {/* Avatar cluster */}
-      <View className="flex-row">
-        {initials.map((ini, i) => (
-          <View
-            key={ini}
-            className="size-7 items-center justify-center rounded-full border-2 border-sand bg-teal"
-            style={{ marginLeft: i === 0 ? 0 : -10 }}
-          >
-            <Text className="font-sans-bold text-[10px] text-paper">{ini}</Text>
-          </View>
-        ))}
-      </View>
+// Honest trust signals for a new app — facts that are actually true, not
+// fabricated social proof. COMPLIANCE: no invented ratings, review counts, or
+// testimonials (App Store 2.3.x / Play Misrepresentation policy). Swap in a
+// real rating + review count only once the app has genuinely earned them.
+const SIGNALS: {
+  icon: 'shield-halved' | 'check' | 'heart-pulse';
+  label: string;
+}[] = [
+  { icon: 'shield-halved', label: 'Private & secure' },
+  { icon: 'check', label: 'No account needed' },
+  { icon: 'heart-pulse', label: 'Cancel anytime' },
+];
 
-      {/* Rating */}
-      <View className="flex-row items-center gap-1.5">
-        <View className="flex-row gap-0.5">
-          {[0, 1, 2, 3, 4].map((s) => (
-            <Icon key={s} icon="star" size={12} color="#c98a2b" />
-          ))}
-        </View>
-        <Text className="font-sans-semibold text-[13px] text-ink">
-          {rating.toFixed(1)}
-        </Text>
-        <Text className="font-sans text-[13px] text-muted">
-          · {count}+ reviews
+export const TrustStrip = () => (
+  <View className="flex-row items-center justify-center gap-4">
+    {SIGNALS.map(({ icon, label }) => (
+      <View key={label} className="flex-row items-center gap-1.5">
+        <Icon icon={icon} size={12} color="#0e7c7b" />
+        <Text className="font-sans-semibold text-[12px] text-muted">
+          {label}
         </Text>
       </View>
-    </View>
-  );
-};
+    ))}
+  </View>
+);
 
 export default TrustStrip;

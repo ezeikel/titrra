@@ -1,5 +1,6 @@
 'use client';
 
+import { buildLadder } from '@titrra/types';
 import {
   createContext,
   type ReactNode,
@@ -14,12 +15,16 @@ import {
   type SideEffectType,
   type WeightUnit,
 } from '@/lib/api';
-import { buildLadder } from '@titrra/types';
 import { type BodyShape, setStoredBodyShape } from '@/lib/body-shape';
 import { getDrugMeta } from '@/lib/glp1';
 
 const ONBOARDED_KEY = 'titrra.onboarded';
 const NAME_KEY = 'titrra.name';
+// Mirror of ONBOARDED_KEY as a cookie so the edge proxy (proxy.ts) can gate
+// /app without JS — localStorage is invisible to middleware. Written alongside
+// the localStorage flag in markOnboarded(). ~10 years, matching lib/device.ts.
+const ONBOARDED_COOKIE = 'titrra.onboarded';
+const ONBOARDED_COOKIE_MAX_AGE = 60 * 60 * 24 * 365 * 10;
 
 // Accumulated onboarding answers — mirrors apps/mobile/contexts/onboarding.tsx.
 // Nothing is written to the server until commit() runs at the value-reveal step,
@@ -119,6 +124,10 @@ export const OnboardingProvider = ({ children }: { children: ReactNode }) => {
     if (typeof localStorage !== 'undefined') {
       localStorage.setItem(ONBOARDED_KEY, 'true');
       localStorage.setItem(NAME_KEY, data.name);
+    }
+    // Cookie mirror so the edge proxy can gate /app on the very next request.
+    if (typeof document !== 'undefined') {
+      document.cookie = `${ONBOARDED_COOKIE}=1; path=/; max-age=${ONBOARDED_COOKIE_MAX_AGE}; SameSite=Lax`;
     }
     // Persist the chosen body figure so the Today map shows it immediately.
     setStoredBodyShape(data.bodyShape);

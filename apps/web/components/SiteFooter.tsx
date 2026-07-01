@@ -1,3 +1,5 @@
+import StoreBadges from '@/components/StoreBadges';
+
 // Copyright year as a build-time constant. Next 16 forbids `new Date()` during
 // static prerender (current time isn't cacheable) in both Server and Client
 // Components — see next-prerender-current-time. A footer year doesn't need to
@@ -12,6 +14,7 @@ const SiteFooter = () => (
         For tracking and education only. Not medical advice. Titrra never
         recommends a dose change — always talk to your healthcare provider.
       </p>
+      <StoreBadges placement="footer" className="mt-6" />
       <div className="mt-6 flex flex-wrap gap-x-6 gap-y-2 text-xs text-muted-foreground">
         <a href="/privacy" className="hover:text-foreground">
           Privacy

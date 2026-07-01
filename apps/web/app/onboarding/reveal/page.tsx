@@ -14,7 +14,9 @@ const RevealInner = () => {
   const { data, commit } = useOnboarding();
   const meta = data.drug ? getDrugMeta(data.drug) : null;
 
-  const [saveFailed, setSaveFailed] = useState(params.get('commitFailed') === '1');
+  const [saveFailed, setSaveFailed] = useState(
+    params.get('commitFailed') === '1',
+  );
   const [retrying, setRetrying] = useState(false);
 
   const retrySave = async () => {
@@ -89,7 +91,9 @@ const RevealInner = () => {
               <p className="text-[11px] font-bold uppercase tracking-[2px] text-teal-deep">
                 Your medication
               </p>
-              <p className="mt-1 text-[20px] font-bold text-ink">{meta.label}</p>
+              <p className="mt-1 text-[20px] font-bold text-ink">
+                {meta.label}
+              </p>
               <p className="mt-0.5 text-[13px] text-muted-foreground">
                 {meta.scheduleType === 'WEEKLY' ? 'Weekly' : 'Daily'} ·{' '}
                 {meta.form === 'INJECTION' ? 'Injection' : 'Pill'}
@@ -142,15 +146,15 @@ const RevealInner = () => {
         </div>
 
         <p className="mt-6 text-[11px] leading-[16px] text-muted-foreground">
-          For tracking and education only. Not medical advice. Your plan reflects
-          what you told us — confirm doses with your provider.
+          For tracking and education only. Not medical advice. Your plan
+          reflects what you told us — confirm doses with your provider.
         </p>
       </div>
 
       <div className="sticky bottom-0 bg-white px-5 pb-6 pt-3">
         <button
           type="button"
-          onClick={() => router.replace('/')}
+          onClick={() => router.replace('/app')}
           className="w-full rounded-2xl bg-teal px-6 py-4 text-[16px] font-bold uppercase tracking-[1px] text-white hover:bg-teal-deep"
         >
           See my plan

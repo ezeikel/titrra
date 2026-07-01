@@ -21,7 +21,8 @@ export type AnalyticsEvent =
   | 'purchase_completed'
   | 'purchase_cancelled'
   | 'purchase_restored'
-  | 'export_generated';
+  | 'export_generated'
+  | 'store_badge_clicked';
 
 // Loose by design — analytics props are free-form. Tighten per-event as the
 // product hardens.

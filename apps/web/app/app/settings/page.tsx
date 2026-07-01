@@ -24,6 +24,11 @@ const SettingsScreen = () => {
       localStorage.removeItem('titrra.name');
       localStorage.removeItem('titrra.bodyShape');
     }
+    // Clear the edge-gate cookie mirror too, so the reset user is re-gated
+    // out of /app on the next request.
+    if (typeof document !== 'undefined') {
+      document.cookie = 'titrra.onboarded=; path=/; max-age=0; SameSite=Lax';
+    }
     window.location.href = '/';
   };
 

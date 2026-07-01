@@ -1,4 +1,4 @@
-import WaitlistForm from '@/components/WaitlistForm';
+import StoreBadges from '@/components/StoreBadges';
 
 const FinalCta = () => (
   <section className="bg-sand">
@@ -7,12 +7,12 @@ const FinalCta = () => (
         <h2 className="font-heading mx-auto max-w-2xl text-balance text-3xl font-bold tracking-tight text-white sm:text-4xl">
           Your shot routine, finally in one calm place.
         </h2>
-        <p className="mx-auto mt-4 max-w-xl text-balance text-teal-50/90 text-white/80">
-          Be first to know when Titrra launches on iOS and Android. No spam —
-          just a single email when it&apos;s ready.
+        <p className="mx-auto mt-4 max-w-xl text-balance text-white/80">
+          Download Titrra free on iOS and Android — no account needed to start
+          logging your shots.
         </p>
         <div className="mt-8 flex flex-col items-center gap-3">
-          <WaitlistForm variant="onDark" />
+          <StoreBadges placement="hero" onDark className="justify-center" />
         </div>
       </div>
     </div>

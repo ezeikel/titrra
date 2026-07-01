@@ -9,7 +9,7 @@ import ValueProps from '@/components/ValueProps';
 
 export const metadata: Metadata = {
   alternates: {
-    canonical: '/landing',
+    canonical: '/',
   },
 };
 

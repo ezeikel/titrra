@@ -1,4 +1,5 @@
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
+import { faApple, faGooglePlay } from '@fortawesome/free-brands-svg-icons';
 import {
   faChartLine,
   faCheck,
@@ -39,6 +40,8 @@ const ICONS = {
   star: faStar,
   'shield-halved': faShieldHalved,
   xmark: faXmark,
+  apple: faApple,
+  'google-play': faGooglePlay,
 } satisfies Record<string, IconDefinition>;
 
 export type IconName = keyof typeof ICONS;

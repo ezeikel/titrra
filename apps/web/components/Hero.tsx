@@ -1,4 +1,5 @@
-import WaitlistForm from '@/components/WaitlistForm';
+import Link from 'next/link';
+import StoreBadges from '@/components/StoreBadges';
 
 const Hero = () => (
   <section className="relative overflow-hidden bg-sand">
@@ -13,11 +14,17 @@ const Hero = () => (
         effects and weight — built for Ozempic, Wegovy, Mounjaro and Zepbound,
         not calories.
       </p>
-      <div className="mt-10 flex w-full flex-col items-center gap-3">
-        <WaitlistForm />
+      <div className="mt-10 flex w-full flex-col items-center gap-4">
+        <StoreBadges placement="hero" className="justify-center" />
         <p className="text-xs text-muted-foreground">
-          Join the waitlist — be first when Titrra launches on iOS &amp;
-          Android.
+          Free to start on iOS &amp; Android — no account needed. Or{' '}
+          <Link
+            href="/onboarding"
+            className="font-semibold text-teal-deep underline-offset-2 hover:underline"
+          >
+            try it in your browser
+          </Link>
+          .
         </p>
       </div>
     </div>

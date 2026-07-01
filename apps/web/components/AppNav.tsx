@@ -7,11 +7,11 @@ import { Icon, type IconName } from '@/components/Icon';
 // Tab set + icons match the mobile GlassTabBar exactly (same FontAwesome Pro
 // glyphs + labels), so the bottom bar reads identically across web and mobile.
 const TABS: { href: string; label: string; icon: IconName }[] = [
-  { href: '/', label: 'Today', icon: 'syringe' },
-  { href: '/doses', label: 'Doses', icon: 'chart-line' },
-  { href: '/weight', label: 'Weight', icon: 'weight-scale' },
-  { href: '/effects', label: 'Effects', icon: 'triangle-exclamation' },
-  { href: '/settings', label: 'Settings', icon: 'gear' },
+  { href: '/app', label: 'Today', icon: 'syringe' },
+  { href: '/app/doses', label: 'Doses', icon: 'chart-line' },
+  { href: '/app/weight', label: 'Weight', icon: 'weight-scale' },
+  { href: '/app/effects', label: 'Effects', icon: 'triangle-exclamation' },
+  { href: '/app/settings', label: 'Settings', icon: 'gear' },
 ];
 
 // Bottom tab bar mirroring the mobile app's five tabs.
@@ -22,7 +22,9 @@ export const AppNav = () => {
       <div className="mx-auto flex max-w-md items-center justify-around px-2 py-2">
         {TABS.map((t) => {
           const active =
-            t.href === '/' ? pathname === '/' : pathname.startsWith(t.href);
+            t.href === '/app'
+              ? pathname === '/app'
+              : pathname.startsWith(t.href);
           return (
             <Link
               key={t.href}

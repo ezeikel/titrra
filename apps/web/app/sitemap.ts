@@ -1,8 +1,7 @@
 import type { MetadataRoute } from 'next';
 import { getSitemapBlogPosts } from '@/lib/seo/blog';
+import { getGlp1PageSlugs } from '@/lib/seo/glp1-pages';
 import { SITE_URL } from '@/lib/site';
-
-// PHASE E (programmatic GLP-1): import { getGlp1PageSlugs } from '@/lib/seo/glp1-pages';
 
 const BASE_URL = SITE_URL;
 
@@ -27,6 +26,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     },
     {
+      url: `${BASE_URL}/glp-1`,
+      lastModified: LAST_MODIFIED,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
       url: `${BASE_URL}/terms`,
       lastModified: LAST_MODIFIED,
       changeFrequency: 'yearly',
@@ -40,14 +45,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     },
   ];
 
-  // PHASE E — config-array driven (see lib/seo/glp1-pages.ts). Empty today.
-  // const glp1Pages: MetadataRoute.Sitemap = getGlp1PageSlugs().map((slug) => ({
-  //   url: `${BASE_URL}/glp-1/${slug}`,
-  //   lastModified: LAST_MODIFIED,
-  //   changeFrequency: 'monthly' as const,
-  //   priority: 0.7,
-  // }));
-  const glp1Pages: MetadataRoute.Sitemap = [];
+  // Programmatic per-drug tracker pages (see lib/seo/glp1-pages.ts).
+  const glp1Pages: MetadataRoute.Sitemap = getGlp1PageSlugs().map((slug) => ({
+    url: `${BASE_URL}/glp-1/${slug}`,
+    lastModified: LAST_MODIFIED,
+    changeFrequency: 'monthly' as const,
+    priority: 0.7,
+  }));
 
   // Sanity blog. Each entry uses its own date; helper try/catches → [].
   const posts = await getSitemapBlogPosts();

@@ -184,3 +184,29 @@ eas submit --profile production --platform all
 ## NOTES
 - Neon connection string is in `apps/web/.env.local` (gitignored). For prod, add `DATABASE_URL` to Vercel env + GitHub secrets — Neon branch strategy: use `main` for prod, create a `development` branch for local once you want isolation.
 - Compliance: every dose/PK screen MUST show the "not medical advice" disclaimer (already noted in CLAUDE.md + the spec).
+
+## QUEUED FOR NEXT iOS UPDATE (added 2026-06-28)
+
+### iOS paywall screenshot swap (App Store metadata)
+The current App Store listing (1.0, READY_FOR_DISTRIBUTION / live) still has the
+**old paywall screenshot with fabricated "★ 4.9 · 320+ reviews"** social proof.
+That fake TrustStrip was fixed in the app code (commit 4aa56c3 — honest
+"Private & secure · No account needed · Cancel anytime") and the Play listing
+screenshot was already recaptured + resubmitted. **iOS listing was left as-is
+because 1.0 was already approved.**
+
+**Do this with the next iOS build/update (needs a fresh iOS binary anyway):**
+1. Build the next iOS version with the honest-TrustStrip code (already committed).
+2. Capture the paywall on an **iOS simulator** at App Store dims — iPhone 6.7"
+   (1290×2796 or 1320×2868) + iPad 12.9" (2048×2732). Deep-link straight to it:
+   `argent open-url --udid <ios-sim> --url "titrra://paywall"` (skips onboarding).
+   Do NOT reuse the Android/Pixel capture — Apple rejects Android chrome.
+3. Create an editable version (`asc versions create --copy-metadata-from <prev>`
+   if 1.0 is still READY_FOR_SALE) and replace the paywall screenshot in the
+   iPhone 6.7" + iPad screenshot sets via `asc localizations screenshot-sets` /
+   `asc screenshots upload`.
+4. Ship it with that version's submission.
+
+Why it matters: same fabricated-social-proof issue that got Play-rejected
+(Guideline 2.3.x). Apple approved the old build, but it's a latent risk — clear
+it on the next update. See memory [[no-fake-social-proof]].

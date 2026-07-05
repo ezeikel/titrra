@@ -37,11 +37,20 @@ export const resolveUser = async (deviceId: string) => {
     });
 };
 
-// The single server-side identity read all billing code flows through. Returns
-// the DB User.id for the request's device, or null if no device header is
-// present. (A NextAuth session branch would be added here later; for now the
-// device id IS the identity.)
+// Header the proxy injects after verifying a signed mobile Bearer JWT. A client
+// cannot forge it — the proxy strips any client-supplied value first.
+const USER_ID_HEADER = 'x-user-id';
+
+// The single server-side identity read all billing/data code flows through.
+// Order of precedence:
+//   1. x-user-id — the authenticated user id, set by proxy.ts after verifying
+//      the device JWT (signed-in mobile user, or a linked device).
+//   2. x-titrra-device — pure-anonymous fallback: resolve/create the device
+//      user (unchanged behaviour for users who never sign in).
 export const getUserId = async (req: Request): Promise<string | null> => {
+  const injected = req.headers.get(USER_ID_HEADER)?.trim();
+  if (injected) return injected;
+
   const deviceId = getDeviceId(req);
   if (!deviceId) return null;
   const user = await resolveUser(deviceId);

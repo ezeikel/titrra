@@ -34,6 +34,15 @@ const allowCleartext = env !== 'production';
 const EAS_PROJECT_ID =
   process.env.EAS_PROJECT_ID ?? 'be088d33-0a70-4a53-8db0-ea198201c3b1';
 
+// --- Auth: native OAuth URL schemes (same pattern as ptp / chunky-crayon) ---
+// iOS Google Sign-In needs the REVERSED iOS client id as a URL scheme in
+// CFBundleURLTypes, or the native flow never returns. Facebook needs `fb<APPID>`.
+const googleIosClientId = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID
+  ? process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID.split('.').reverse().join('.')
+  : '';
+const facebookAppId = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID ?? '';
+const facebookClientToken = process.env.EXPO_PUBLIC_FACEBOOK_CLIENT_TOKEN ?? '';
+
 export default ({ config }: ConfigContext): ExpoConfig => {
   // Per-variant icons if present, else fall back to the prod icon.
   const variantSuffix =
@@ -63,11 +72,41 @@ export default ({ config }: ConfigContext): ExpoConfig => {
     ios: {
       supportsTablet: true,
       bundleIdentifier: bundleId,
+      // Sign in with Apple (native flow via expo-apple-authentication).
+      usesAppleSignIn: true,
       // Universal links so shared titrra.com URLs open the app when installed
       // (AASA file ships on the web app).
       associatedDomains: ['applinks:titrra.com'],
+      entitlements: {
+        'com.apple.developer.applesignin': ['Default'],
+      },
       infoPlist: {
         ITSAppUsesNonExemptEncryption: false,
+        // Native OAuth return URL schemes: reversed Google iOS client id +
+        // fb<APPID>. Without these the iOS Google / Facebook flows never
+        // redirect back into the app.
+        CFBundleURLTypes: [
+          {
+            CFBundleURLSchemes: [
+              ...(googleIosClientId ? [googleIosClientId] : []),
+              ...(facebookAppId ? [`fb${facebookAppId}`] : []),
+            ],
+          },
+        ],
+        ...(facebookAppId
+          ? {
+              FacebookAppID: facebookAppId,
+              FacebookClientToken: facebookClientToken,
+              FacebookDisplayName: appName,
+              // Lets the app open the FB app for login if installed.
+              LSApplicationQueriesSchemes: [
+                'fbapi',
+                'fb-messenger-api',
+                'fbauth2',
+                'fbshareextension',
+              ],
+            }
+          : {}),
       },
       // Required by App Store review (iOS 17.2+) because we bundle a tracking
       // SDK (PostHog) and touch the listed APIs. Mirrors ptp's manifest, scoped
@@ -129,6 +168,30 @@ export default ({ config }: ConfigContext): ExpoConfig => {
       'expo-router',
       // R3F's native entrypoint imports expo-asset (GL asset pipeline).
       'expo-asset',
+      // --- Auth ---
+      'expo-secure-store',
+      'expo-apple-authentication',
+      '@react-native-google-signin/google-signin',
+      // Podfile patch: google-signin → AppCheckCore needs GoogleUtilities +
+      // RecaptchaInterop as modular headers under Expo SDK 56 static frameworks,
+      // or `pod install` fails. (Same fix chunky-crayon uses.)
+      './plugins/withModularHeaders',
+      // Facebook native SDK. `scheme` MUST be fb<APPID> (NOT the app deep-link
+      // scheme) — a wrong scheme is why FB login broke on Android in ptp. Only
+      // added when the FB env is present.
+      ...(facebookAppId
+        ? [
+            [
+              'react-native-fbsdk-next',
+              {
+                appID: facebookAppId,
+                clientToken: facebookClientToken,
+                displayName: appName,
+                scheme: `fb${facebookAppId}`,
+              },
+            ] as [string, Record<string, string>],
+          ]
+        : []),
       [
         'expo-splash-screen',
         {

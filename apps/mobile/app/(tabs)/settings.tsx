@@ -1,9 +1,12 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { toast } from 'sonner-native';
 import { Icon } from '@/components/Icon';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
+import { SocialAuthButtons } from '@/components/SocialAuthButtons';
+import { useAuth } from '@/contexts/auth';
 import { usePurchases } from '@/contexts/purchases';
 import { trackEvent } from '@/lib/analytics';
 import { type BodyShape, useBodyShape } from '@/lib/body-shape';
@@ -124,8 +127,11 @@ const BodyShapeCard = () => {
 
 const Settings = () => {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { isPro, restore } = usePurchases();
+  const { isSignedIn, signOut } = useAuth();
   const [restoring, setRestoring] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
 
   const onRestore = async () => {
     if (restoring) return; // guard double-tap
@@ -182,9 +188,58 @@ const Settings = () => {
             trackEvent('export_generated', { source: 'settings' });
           }}
         />
+        {/* Optional account linking — sync across devices + web. Anonymous
+            users never have to sign in; this only unlocks sync. */}
+        {isSignedIn ? (
+          <Row label="Sign out" onPress={signOut} />
+        ) : (
+          <Row
+            label="Sign in to sync"
+            onPress={() => {
+              trackEvent('sign_in_opened', { source: 'settings' });
+              setSignInOpen(true);
+            }}
+          />
+        )}
       </View>
 
       <BodyShapeCard />
+
+      {/* Sign-in modal */}
+      <Modal
+        visible={signInOpen}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setSignInOpen(false)}
+      >
+        <View className="flex-1 justify-end bg-black/40">
+          <View
+            style={{ paddingBottom: insets.bottom + 20 }}
+            className="rounded-t-3xl bg-sand px-6 pt-5"
+          >
+            <View className="mb-1 flex-row items-center justify-between">
+              <Text className="font-display-bold text-[22px] text-ink">
+                Sign in to sync
+              </Text>
+              <Pressable
+                onPress={() => setSignInOpen(false)}
+                hitSlop={14}
+                accessibilityRole="button"
+                accessibilityLabel="Close"
+                className="size-9 items-center justify-center rounded-full bg-paper"
+                style={elevation.card}
+              >
+                <Icon icon="xmark" size={16} color="#5f706e" />
+              </Pressable>
+            </View>
+            <Text className="mb-5 font-sans text-[14px] text-muted">
+              Keep your dose history, weight and Pro across your devices and the
+              web. You can keep using Titrra without an account.
+            </Text>
+            <SocialAuthButtons onSignedIn={() => setSignInOpen(false)} />
+          </View>
+        </View>
+      </Modal>
     </ScreenScaffold>
   );
 };

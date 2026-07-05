@@ -1,6 +1,7 @@
 import { PostHogProvider } from 'posthog-react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { AuthProvider } from '@/contexts/auth';
 import { OnboardingProvider } from '@/contexts/onboarding';
 import { PurchasesProvider } from '@/contexts/purchases';
 import { posthog } from '@/lib/analytics';
@@ -24,14 +25,18 @@ const WithPostHog = ({ children }: ProvidersProps) =>
   );
 
 // Provider order: gesture root outermost so everything below can use gestures
-// + safe area; purchases innermost so screens can read Pro status.
+// + safe area; auth above purchases so the device is registered (DB user id +
+// token) before RevenueCat anchors its appUserID on it; purchases innermost so
+// screens can read Pro status.
 const Providers = ({ children }: ProvidersProps) => (
   <GestureHandlerRootView style={{ flex: 1 }}>
     <SafeAreaProvider>
       <WithPostHog>
-        <PurchasesProvider>
-          <OnboardingProvider>{children}</OnboardingProvider>
-        </PurchasesProvider>
+        <AuthProvider>
+          <PurchasesProvider>
+            <OnboardingProvider>{children}</OnboardingProvider>
+          </PurchasesProvider>
+        </AuthProvider>
       </WithPostHog>
     </SafeAreaProvider>
   </GestureHandlerRootView>

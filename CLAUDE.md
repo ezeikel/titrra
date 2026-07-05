@@ -63,6 +63,33 @@ teardown: `docs/GLP1-RESEARCH-AND-SPEC.md`.
 - Vercel: link inside `apps/web` only, NEVER at repo root. Root Directory =
   `apps/web`.
 
+## Store pricing (web ↔ Apple ↔ Google, aligned)
+
+All three platforms are aligned to the **App Store tiers** for the $7.99/$39.99/
+$59.99 USD base: **GBP £7.99/£39.99/£59.99, EUR €8.99/€44.99/€64.99, USD
+unchanged**. Web display lives in `apps/web/constants.ts` `PRICE_AMOUNTS`;
+Stripe multi-currency Prices (native `currency_options`, one Price id per plan)
+carry the same amounts; checkout sets the currency from the Vercel geo header
+(`x-vercel-ip-country` → `apps/web/lib/currency.ts`).
+
+**Reading/writing Google Play prices — `google-play-cli` CANNOT do it.** The CLI
+(brew `googleplaycli` 0.5.0, `Vacxe/google-play-cli-kt`, latest) only implements
+the retired `inappproducts` endpoint (`GET /androidpublisher/v3/.../inappproducts`
+→ 403 "Please migrate to the new publishing API") and has **no** Monetization API
+commands (no `subscriptions`/`monetization`/`prices`). Publishing commands
+(edit/tracks/listings/bundles) work fine — it's only pricing that's a feature gap.
+To read/write **subscription** prices, hit the **Monetization API directly** with
+the org Play service account (see workspace `~/Development/CLAUDE.md` for the
+generic recipe). Titrra ids: package `com.chewybytes.titrra.app`, subs
+`titrra_pro_monthly_v1:monthly-base`, `titrra_pro_yearly_v2:yearly-base-2` (the
+`-2` is active; `yearly-base` is INACTIVE — don't patch inactive base plans).
+**One-time products** (`titrra_pro_lifetime_v1`, non-consumable) have NO working
+v3 API endpoint (`onetimeproducts` 404s) — edit their per-region price in the
+**Play Console UI** (Monetise → One-time products → the product → purchase option
+→ search region → pencil → Save, then the page-level Save). Use regions version
+**`2025/03`** (not `2022/02`) in patch calls, else eurozone late-joiners like BG
+error ("Expected BGN but got EUR").
+
 ## Commits
 
 Semantic commit style (`type(scope): message`), one-liners. No Claude

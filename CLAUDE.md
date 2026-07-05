@@ -90,6 +90,45 @@ v3 API endpoint (`onetimeproducts` 404s) — edit their per-region price in the
 **`2025/03`** (not `2022/02`) in patch calls, else eurozone late-joiners like BG
 error ("Expected BGN but got EUR").
 
+## Auth (NextAuth v5 + mobile device-JWT bridge)
+
+Titrra is anonymous-first with **optional** account linking (copied from
+chunky-crayon / PTP). Web = NextAuth v5 database sessions; mobile = a signed
+device-JWT (`jose` HS256) that `proxy.ts` verifies and turns into `x-user-id`.
+Sign-in merges the anonymous device-user into the real account
+(`lib/mobile-auth.ts` `mergeAnonymousUserIntoTarget` — account wins on
+`IntakeLog @@unique([userId,date])` collisions).
+
+- Providers: Google, Apple, Facebook, Resend magic-link — each loaded in
+  `auth.ts` **only when its env is present** (so the build/dev server starts
+  before every provider is provisioned).
+- Titrra OAuth apps (project `titrra`, chewybytes org): Google web client
+  (`380927007840-dorh…`, redirects `www.titrra.com` + `localhost:3000`), iOS
+  clients per variant (prod/dev/internal, bundle-id matched), Android client
+  (SHA-1 = Play App-signing cert `E9:95:EA:…:9A:C3`). Apple Services ID
+  `com.chewybytes.titrra.signin` (App ID `com.chewybytes.titrra.app` has Sign In
+  with Apple enabled; return URL `https://www.titrra.com/api/auth/callback/apple`).
+- **Callbacks always use `www.`** — the apex 308-redirects to www for all
+  chewybytes domains, so every OAuth redirect/return URL is `www.titrra.com/...`.
+
+## Shared cross-app credentials (reuse, never regenerate)
+
+Some keys are **account/team-wide** and are shared across every Chewy Bytes app
+— reuse the existing file in iCloud, do NOT create a per-app one. Location:
+`~/Library/Mobile Documents/com~apple~CloudDocs/Tech/App Development/`.
+
+| Key | File | Used for | Titrra reuses |
+|---|---|---|---|
+| **Sign in with Apple** (`APPLE_KEY_ID=ZU2248TY29`, team `HGX827L49J`) | `Apple/SignInWithApple-ZU2248TY29-ChewyBytes-HGX827L49J.p8` | Apple OAuth (web NextAuth). Team-wide — one key for all apps. | ✅ (per-app part is only the Services ID `com.chewybytes.titrra.signin`) |
+| **ASC In-App-Purchase key** (`PBXJDFJ6WT`) | `Apple/AppStoreConnect-SubscriptionKey-PBXJDFJ6WT.p8` | RevenueCat ↔ App Store (all apps) | ✅ |
+| **ASC API key** (`G96SP9M8C2`) | `Apple/AuthKey_G96SP9M8C2 asc CLI.p8` | `asc` CLI auth | ✅ |
+| **Google Play publishing SA** | `Google/chewy-bytes-play-publishing.json` | `eas submit` + Play API (account-level) | ✅ |
+
+Per-app (create fresh): the OAuth **client IDs** (Google web/iOS/Android, Apple
+Services ID), the RevenueCat per-app SA, `NEXT_AUTH_SECRET`/`MOBILE_AUTH_SECRET`.
+`.p8` files are gitignored in-repo (`*.p8` in `.gitignore`, same as CC/PTP) —
+the canonical copy lives in iCloud, never committed.
+
 ## Commits
 
 Semantic commit style (`type(scope): message`), one-liners. No Claude

@@ -4,3 +4,6 @@
 /playwright-report/
 /playwright/.cache/
 .vercel
+
+# Apple Sign In / ASC keys — canonical copy in iCloud, never commit
+*.p8

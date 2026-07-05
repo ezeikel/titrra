@@ -6,7 +6,10 @@ import { Resend } from 'resend';
 // Requires RESEND_API_KEY + a verified sending domain (titrra.com) — see the
 // auth setup notes. Kept as a server action so the route/auth callback stays thin.
 
-const FROM = process.env.EMAIL_FROM ?? 'Titrra <no-reply@titrra.com>';
+// Sends from the verified Resend subdomain (notifications.titrra.com), overridable
+// via EMAIL_FROM. Must match a VERIFIED Resend domain or sends are rejected.
+const FROM =
+  process.env.EMAIL_FROM ?? 'Titrra <no-reply@notifications.titrra.com>';
 
 const getResend = (): Resend | null => {
   const key = process.env.RESEND_API_KEY;

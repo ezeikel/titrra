@@ -71,7 +71,8 @@ if (process.env.RESEND_API_KEY) {
   providers.push(
     Resend({
       apiKey: process.env.RESEND_API_KEY,
-      from: process.env.EMAIL_FROM ?? 'Titrra <no-reply@titrra.com>',
+      from:
+        process.env.EMAIL_FROM ?? 'Titrra <no-reply@notifications.titrra.com>',
       async sendVerificationRequest({ identifier: email, url }) {
         const result = await sendMagicLinkEmail(email, url);
         if (!result.success) {

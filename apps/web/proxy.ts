@@ -1,8 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { jwtVerify } from 'jose';
+import { type NextRequest, NextResponse } from 'next/server';
 
 // Cookie mirror of the localStorage onboarding flag, written in
 // contexts/onboarding.tsx markOnboarded() so the edge can gate without JS.
 const ONBOARDED_COOKIE = 'titrra.onboarded';
+
+// Edge-safe (jose-only) verification of the mobile device JWT. We can't import
+// lib/mobile-auth here — it pulls in Prisma, which isn't Edge-compatible — so
+// the token check is inlined. Must match createDeviceToken's secret + alg.
+const MOBILE_SECRET = new TextEncoder().encode(
+  process.env.MOBILE_AUTH_SECRET ||
+    process.env.NEXT_AUTH_SECRET ||
+    'dev-secret-change-me',
+);
+
+const HEADER_USER_ID = 'x-user-id';
+
+const verifiedUserIdFromBearer = async (
+  authHeader: string | null,
+): Promise<string | null> => {
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  try {
+    const { payload } = await jwtVerify(authHeader.slice(7), MOBILE_SECRET);
+    return (payload.userId as string) ?? null;
+  } catch {
+    return null;
+  }
+};
 
 // Next.js 16: middleware.ts is renamed proxy.ts.
 // Two responsibilities:
@@ -11,9 +35,25 @@ const ONBOARDED_COOKIE = 'titrra.onboarded';
 //     to eu.i.posthog.com.
 //  2. Gate the tracker at /app: a visitor who hasn't completed onboarding is
 //     redirected to the onboarding flow (marketing lives at /).
-export function proxy(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const url = request.nextUrl.clone();
   const { pathname } = request.nextUrl;
+
+  // Identity injection for the API surface. SECURITY: strip any client-supplied
+  // x-user-id first (only the middleware may set it, after verifying a signed
+  // Bearer token), then inject the verified id so downstream getUserId() can
+  // trust the header. NextAuth's own routes are skipped. Anonymous requests
+  // (no/invalid token) pass through with no x-user-id → getUserId falls back to
+  // the device header.
+  if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth/')) {
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.delete(HEADER_USER_ID);
+    const userId = await verifiedUserIdFromBearer(
+      request.headers.get('authorization'),
+    );
+    if (userId) requestHeaders.set(HEADER_USER_ID, userId);
+    return NextResponse.next({ request: { headers: requestHeaders } });
+  }
 
   if (pathname.startsWith('/ingest')) {
     const hostname = pathname.startsWith('/ingest/static/')
@@ -51,5 +91,5 @@ export function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/ingest/:path*', '/app/:path*'],
+  matcher: ['/ingest/:path*', '/app/:path*', '/api/:path*'],
 };

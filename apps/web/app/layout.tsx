@@ -59,12 +59,14 @@ export const metadata: Metadata = {
       'Log your shot, rotate injection sites, follow your titration ladder, and track side effects + weight. The focused GLP-1 tracker.',
     siteName: 'Titrra',
     type: 'website',
+    images: [{ url: '/og-card.png', width: 1200, height: 630, alt: 'Titrra' }],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Titrra: stay on track with every dose',
     description:
       'The focused GLP-1 tracker — dose, injection sites, titration, side effects & weight.',
+    images: ['/og-card.png'],
   },
 };
 

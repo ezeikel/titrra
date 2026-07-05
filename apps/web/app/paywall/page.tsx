@@ -16,7 +16,7 @@ const PERKS = [
   'Your full dose + weight history',
   'The titration ladder',
   'Medication-level trends',
-  'Provider exports',
+  'Provider PDF exports',
 ];
 
 const PaywallPage = () => {

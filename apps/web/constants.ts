@@ -74,30 +74,55 @@ export const mapStripeStatus = (
   }
 };
 
-// Honest display pricing for the web paywall (no fabricated social proof). The
-// real amounts come from Stripe at checkout; these drive the UI copy.
-export const TITRRA_PRO_PRICING: {
+// Supported display currencies. Stripe presents the matching currency at
+// checkout (the Prices are multi-currency); these drive the paywall copy so the
+// displayed number matches what the customer will actually be charged.
+export type DisplayCurrency = 'USD' | 'GBP' | 'EUR';
+
+const CURRENCY_SYMBOL: Record<DisplayCurrency, string> = {
+  USD: '$',
+  GBP: '£',
+  EUR: '€',
+};
+
+// Amounts per plan per currency (must match the Stripe Price currency_options).
+const PRICE_AMOUNTS: Record<BillingPeriod, Record<DisplayCurrency, string>> = {
+  MONTHLY: { USD: '7.99', GBP: '6.99', EUR: '7.99' },
+  ANNUAL: { USD: '39.99', GBP: '34.99', EUR: '39.99' },
+  LIFETIME: { USD: '59.99', GBP: '54.99', EUR: '59.99' },
+};
+
+type PlanDisplay = {
   period: BillingPeriod;
   label: string;
-  price: string;
   cadence: string;
   note?: string;
   bestValue?: boolean;
-}[] = [
+};
+
+const PLAN_DISPLAY: PlanDisplay[] = [
   {
     period: 'ANNUAL',
     label: 'Yearly',
-    price: '$39.99',
     cadence: '/year',
     note: '3-day free trial',
     bestValue: true,
   },
-  { period: 'MONTHLY', label: 'Monthly', price: '$7.99', cadence: '/month' },
+  { period: 'MONTHLY', label: 'Monthly', cadence: '/month' },
   {
     period: 'LIFETIME',
     label: 'Lifetime',
-    price: '$59.99',
     cadence: 'once',
     note: 'Pay once, keep forever',
   },
 ];
+
+// Honest display pricing for the paywall in the visitor's currency (no
+// fabricated social proof). The real charge comes from Stripe at checkout.
+export const proPricing = (
+  currency: DisplayCurrency = 'USD',
+): (PlanDisplay & { price: string })[] =>
+  PLAN_DISPLAY.map((p) => ({
+    ...p,
+    price: `${CURRENCY_SYMBOL[currency]}${PRICE_AMOUNTS[p.period][currency]}`,
+  }));

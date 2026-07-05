@@ -1,10 +1,14 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { Icon } from '@/components/Icon';
-import { type BillingPeriod, TITRRA_PRO_PRICING } from '@/constants';
+import {
+  type BillingPeriod,
+  type DisplayCurrency,
+  proPricing,
+} from '@/constants';
 import { trackEvent } from '@/lib/analytics';
 import { getDeviceId } from '@/lib/device';
 
@@ -18,6 +22,20 @@ const PERKS = [
 const PaywallPage = () => {
   const [period, setPeriod] = useState<BillingPeriod>('ANNUAL');
   const [loading, setLoading] = useState(false);
+  const [currency, setCurrency] = useState<DisplayCurrency>('USD');
+
+  // Show prices in the visitor's currency (Stripe charges the matching currency
+  // at checkout). Defaults to USD until the geo lookup resolves.
+  useEffect(() => {
+    fetch('/api/currency')
+      .then((r) => r.json())
+      .then((d: { currency?: DisplayCurrency }) => {
+        if (d.currency) setCurrency(d.currency);
+      })
+      .catch(() => {});
+  }, []);
+
+  const pricing = useMemo(() => proPricing(currency), [currency]);
 
   const checkout = async () => {
     if (loading) return;
@@ -70,7 +88,7 @@ const PaywallPage = () => {
 
         {/* Plan selector */}
         <div className="mt-8 flex flex-col gap-3">
-          {TITRRA_PRO_PRICING.map((plan) => {
+          {pricing.map((plan) => {
             const selected = plan.period === period;
             return (
               <button

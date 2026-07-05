@@ -2,6 +2,7 @@ import { getDb } from '@titrra/db';
 import { NextResponse } from 'next/server';
 import { getUserId } from '@/app/api/_lib/device-user';
 import { type BillingPeriod, modeForPeriod, priceIdFor } from '@/constants';
+import { currencyForCountry } from '@/lib/currency';
 import { siteUrl } from '@/lib/site';
 import { getStripe, isStripeConfigured } from '@/lib/stripe';
 
@@ -39,11 +40,19 @@ export async function POST(req: Request) {
   const existing = await db.subscription.findFirst({ where: { userId } });
   const trialDays = mode === 'subscription' && !existing ? 3 : undefined;
 
+  // Present the visitor's local currency from the Price's currency_options. Can
+  // only be set when there's no existing customer pinned to another currency.
+  const country =
+    req.headers.get('x-vercel-ip-country') ?? req.headers.get('x-country');
+  const currency = currencyForCountry(country).toLowerCase();
+  const canSetCurrency = !user?.stripeCustomerId;
+
   const session = await getStripe().checkout.sessions.create({
     mode,
     line_items: [{ price: priceId, quantity: 1 }],
     client_reference_id: userId,
     customer: user?.stripeCustomerId ?? undefined,
+    ...(canSetCurrency ? { currency } : {}),
     // Guest one-time payments: create a customer so the webhook can link it.
     ...(mode === 'payment' && !user?.stripeCustomerId
       ? { customer_creation: 'always' as const }

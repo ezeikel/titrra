@@ -86,10 +86,12 @@ const CURRENCY_SYMBOL: Record<DisplayCurrency, string> = {
 };
 
 // Amounts per plan per currency (must match the Stripe Price currency_options).
+// Aligned to the App Store's localized tiers for the $7.99/$39.99/$59.99 USD
+// base, so web + iOS + Android all show the same price.
 const PRICE_AMOUNTS: Record<BillingPeriod, Record<DisplayCurrency, string>> = {
-  MONTHLY: { USD: '7.99', GBP: '6.99', EUR: '7.99' },
-  ANNUAL: { USD: '39.99', GBP: '34.99', EUR: '39.99' },
-  LIFETIME: { USD: '59.99', GBP: '54.99', EUR: '59.99' },
+  MONTHLY: { USD: '7.99', GBP: '7.99', EUR: '8.99' },
+  ANNUAL: { USD: '39.99', GBP: '39.99', EUR: '44.99' },
+  LIFETIME: { USD: '59.99', GBP: '59.99', EUR: '64.99' },
 };
 
 type PlanDisplay = {

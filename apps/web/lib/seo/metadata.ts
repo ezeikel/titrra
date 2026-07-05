@@ -12,8 +12,11 @@ type BuildMetadataArgs = {
   description?: string;
   // e.g. '/blog/my-post' — drives canonical + og:url.
   path?: string;
-  // Absolute/root-relative; omit to fall through to the opengraph-image route.
+  // Explicit OG image. When omitted, the static marketing card is used —
+  // unless noDefaultOgImage is set (for routes with their own
+  // opengraph-image.tsx, e.g. /blog/[slug] and /glp-1/[drug]).
   ogImage?: string;
+  noDefaultOgImage?: boolean;
   ogType?: 'website' | 'article';
   keywords?: string[];
   noindex?: boolean;
@@ -26,11 +29,15 @@ type BuildMetadataArgs = {
 const DEFAULT_DESCRIPTION =
   'The focused GLP-1 tracker. Log every dose, rotate injection sites, follow your titration ladder, and track side effects + weight.';
 
+// Branded static social card for marketing/programmatic pages.
+const DEFAULT_OG_IMAGE = '/og-card.png';
+
 export function buildMetadata({
   title,
   description = DEFAULT_DESCRIPTION,
   path = '/',
   ogImage,
+  noDefaultOgImage,
   ogType = 'website',
   keywords,
   noindex,
@@ -38,7 +45,9 @@ export function buildMetadata({
   authors,
   tags,
 }: BuildMetadataArgs = {}): Metadata {
-  const images = ogImage ? [{ url: ogImage }] : undefined;
+  const resolvedImage =
+    ogImage ?? (noDefaultOgImage ? undefined : DEFAULT_OG_IMAGE);
+  const images = resolvedImage ? [{ url: resolvedImage }] : undefined;
   const ogTitle = title ? `${title} | Titrra` : undefined;
 
   return {

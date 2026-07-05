@@ -26,6 +26,8 @@ export async function generateMetadata({
     description: page.description,
     path: `/glp-1/${page.slug}`,
     keywords: page.keywords,
+    // The route's own opengraph-image.tsx (dynamic per-drug card) wins.
+    noDefaultOgImage: true,
   });
 }
 

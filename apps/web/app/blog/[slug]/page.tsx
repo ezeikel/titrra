@@ -55,7 +55,8 @@ export async function generateMetadata({
     publishedTime: post.publishedAt,
     authors: post.author?.name ? [post.author.name] : undefined,
     tags: post.categories?.map((c: { title: string }) => c.title),
-    // No ogImage → app/blog/[slug]/opengraph-image.tsx wins.
+    // The route's own opengraph-image.tsx (dynamic per-post card) wins.
+    noDefaultOgImage: true,
   });
 }
 

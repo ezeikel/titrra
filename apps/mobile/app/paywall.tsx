@@ -129,8 +129,12 @@ const Paywall = () => {
     router.replace('/(tabs)');
   };
 
-  const priceLabel = (key: PlanKey, fallback: string) =>
-    pkgFor(key)?.product.priceString ?? fallback;
+  // The localized store price, or null if it hasn't loaded. We deliberately DON'T
+  // fall back to a hardcoded currency string — StoreKit's priceString is always
+  // in the user's storefront currency, so a hardcoded "$39.99" would show the
+  // wrong currency to a non-US shopper. null → the UI renders a skeleton instead.
+  const priceLabel = (key: PlanKey): string | null =>
+    pkgFor(key)?.product.priceString ?? null;
 
   // Plan-specific CTA — "Continue" is ambiguous for monthly/lifetime (browse vs
   // buy), so name the action.
@@ -237,7 +241,7 @@ const Paywall = () => {
           <View className="mt-5 gap-3">
             <PlanRow
               title="Annual"
-              price={priceLabel('annual', '$39.99/yr')}
+              price={priceLabel('annual')}
               note="3-day free trial, then billed yearly"
               badge="Best value"
               selected={selected === 'annual'}
@@ -245,13 +249,13 @@ const Paywall = () => {
             />
             <PlanRow
               title="Monthly"
-              price={priceLabel('monthly', '$7.99/mo')}
+              price={priceLabel('monthly')}
               selected={selected === 'monthly'}
               onPress={() => setSelected('monthly')}
             />
             <PlanRow
               title="Lifetime"
-              price={priceLabel('lifetime', '$59.99')}
+              price={priceLabel('lifetime')}
               note="One payment, yours forever"
               selected={selected === 'lifetime'}
               onPress={() => setSelected('lifetime')}
@@ -297,13 +301,20 @@ const Paywall = () => {
           </Pressable>
         )}
 
-        {/* Microcopy + auto-renew compliance line */}
+        {/* Microcopy + auto-renew compliance line. Prices come from StoreKit
+            (localized currency); omit them until loaded rather than show a
+            hardcoded currency. The CTA only renders once all prices are loaded
+            (offeringHasAllPackages), so in practice these are present. */}
         <Text className="mt-2.5 text-center font-sans text-[11px] leading-[15px] text-faint">
           {selected === 'annual'
-            ? `3-day free trial, then ${priceLabel('annual', '$39.99')}/yr. `
+            ? priceLabel('annual')
+              ? `3-day free trial, then ${priceLabel('annual')}/yr. `
+              : '3-day free trial, then billed yearly. '
             : selected === 'lifetime'
               ? 'One payment, yours forever. '
-              : `${priceLabel('monthly', '$7.99')}/mo. `}
+              : priceLabel('monthly')
+                ? `${priceLabel('monthly')}/mo. `
+                : 'Billed monthly. '}
           Cancel anytime in Settings. For tracking and education only — not
           medical advice.
         </Text>

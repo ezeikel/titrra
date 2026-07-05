@@ -21,7 +21,8 @@ import {
   getCustomerInfo,
   getOfferingsWithRetry,
   hasPro,
-  offeringHasPackages,
+  missingPackageIds,
+  offeringHasAllPackages,
   purchasePackage,
   restorePurchases,
 } from '@/lib/purchases';
@@ -125,23 +126,23 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
         );
         if (cancelled) return;
         applyInfo(info);
-        // An offering that resolves but has no packages (StoreKit couldn't fetch
-        // the products — region gap, cold-launch race) is NOT a usable paywall.
-        // Treat it as a recoverable error so the UI shows Retry instead of a
-        // live "Start free trial" CTA backed by null packages (which would just
-        // toast "Plans are loading…" on every tap). See lib/purchases.ts.
-        if (offeringHasPackages(current)) {
+        // An offering missing any pinned package or its price (StoreKit couldn't
+        // fetch a product — a subscription not available in the user's App Store
+        // storefront, or a cold-launch race) is NOT a usable paywall: it would
+        // render hardcoded USD fallbacks next to a real localized price. Treat it
+        // as a recoverable error so the UI shows Retry instead of a live CTA over
+        // a broken/wrong-currency plan list. See lib/purchases.ts.
+        if (offeringHasAllPackages(current)) {
           setOffering(current);
           setError(false);
         } else {
           // Capture to Sentry (default integrations don't forward console.error)
-          // so this is visible in prod — it's how we'd learn a live device is
-          // hitting a region/StoreKit gap instead of flying blind.
-          console.error(
-            '[purchases] offerings resolved but empty (no packages)',
-          );
+          // WITH the missing ids, so prod tells us which storefront/product
+          // gapped instead of flying blind.
+          const missing = missingPackageIds(current);
+          console.error('[purchases] offering incomplete', missing);
           Sentry.captureMessage(
-            'purchases: offerings resolved but empty (no packages)',
+            `purchases: offering incomplete (missing: ${missing.join(', ') || 'all'})`,
             'error',
           );
           setOffering(null);

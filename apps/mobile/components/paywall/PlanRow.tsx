@@ -4,7 +4,10 @@ import { elevation } from '@/lib/elevation';
 
 type PlanRowProps = {
   title: string;
-  price: string;
+  // null = the localized store price hasn't loaded yet. We render a skeleton
+  // rather than a hardcoded currency string, so a user never sees a wrong-
+  // currency placeholder (e.g. "$39.99" to a UK shopper).
+  price: string | null;
   note?: string;
   badge?: string;
   selected: boolean;
@@ -26,7 +29,9 @@ export const PlanRow = ({
     onPress={onPress}
     accessibilityRole="radio"
     accessibilityState={{ selected }}
-    accessibilityLabel={`${title} plan, ${price}${note ? `, ${note}` : ''}`}
+    accessibilityLabel={`${title} plan${price ? `, ${price}` : ''}${
+      note ? `, ${note}` : ''
+    }`}
     style={selected ? elevation.card : undefined}
     className={`flex-row items-center gap-3.5 rounded-2xl border-2 px-4 py-4 ${
       selected ? 'border-teal bg-accent' : 'border-border bg-paper'
@@ -58,7 +63,12 @@ export const PlanRow = ({
       ) : null}
     </View>
 
-    <Text className="font-display-bold text-[16px] text-ink">{price}</Text>
+    {price ? (
+      <Text className="font-display-bold text-[16px] text-ink">{price}</Text>
+    ) : (
+      // Price skeleton — shown until StoreKit returns the localized price.
+      <View className="h-4 w-16 rounded-full bg-border/60" />
+    )}
   </Pressable>
 );
 

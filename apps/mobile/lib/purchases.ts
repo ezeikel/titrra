@@ -93,12 +93,42 @@ export const offeringHasPackages = (
   !!offering && offering.availablePackages.length > 0;
 
 /**
- * Fetch offerings, retrying with backoff while the result is empty. StoreKit's
- * product request is async and can lose the race with the first getOfferings()
- * call right after configure(); a retry moments later usually populates it.
- * Throws (like getOfferings) on a hard SDK/config error so the caller's catch
- * can surface Retry. Returns a non-empty offering, or null if still empty after
- * all attempts (caller treats null as recoverable, not silent success).
+ * Strict check: the offering must carry ALL three pinned packages, each with a
+ * real localized price. A "has ≥1 package" check is not enough — if a product
+ * is unavailable in the user's App Store storefront (e.g. a subscription's
+ * territory availability doesn't include GB), StoreKit silently drops it, so the
+ * offering can arrive with only the lifetime package while the two subscriptions
+ * are missing. That leaves the paywall rendering hardcoded USD fallbacks next to
+ * a real GBP price. Requiring every package (with a priceString) means a partial
+ * offering routes to the error/retry path instead of a silent wrong-currency
+ * paywall. Returns the list of missing package ids (empty = complete).
+ */
+export const missingPackageIds = (
+  offering: PurchasesOffering | null,
+): string[] => {
+  if (!offering) return Object.values(PRO_PACKAGES);
+  return Object.values(PRO_PACKAGES).filter(
+    (id) =>
+      !offering.availablePackages.some(
+        (p) => p.identifier === id && !!p.product?.priceString,
+      ),
+  );
+};
+
+export const offeringHasAllPackages = (
+  offering: PurchasesOffering | null,
+): offering is PurchasesOffering =>
+  offeringHasPackages(offering) && missingPackageIds(offering).length === 0;
+
+/**
+ * Fetch offerings, retrying with backoff while the result is INCOMPLETE (missing
+ * any pinned package or price). StoreKit's product request is async and can lose
+ * the race with the first getOfferings() call right after configure(); a retry
+ * moments later usually populates it. Throws (like getOfferings) on a hard
+ * SDK/config error so the caller's catch can surface Retry. Returns the last
+ * offering fetched (the caller decides whether it's complete via
+ * offeringHasAllPackages — a partial one routes to the recoverable error path,
+ * never a silent wrong-currency paywall).
  */
 export const getOfferingsWithRetry = async (
   attempts = 3,
@@ -107,12 +137,12 @@ export const getOfferingsWithRetry = async (
   let last: PurchasesOffering | null = null;
   for (let i = 0; i < attempts; i += 1) {
     last = await getOfferings();
-    if (offeringHasPackages(last)) return last;
+    if (offeringHasAllPackages(last)) return last;
     if (i < attempts - 1) {
       await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
     }
   }
-  return offeringHasPackages(last) ? last : null;
+  return last;
 };
 
 /** True when the customer holds the active Pro entitlement. */

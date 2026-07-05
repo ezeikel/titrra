@@ -1,3 +1,4 @@
+import { getAuthHeader } from '@/lib/auth';
 import { getDeviceId } from '@/lib/device';
 import type { InjectionSite } from '@/lib/rotation';
 
@@ -35,6 +36,9 @@ const SERVER_MESSAGE = 'Something went wrong on our end. Please try again.';
 
 const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const deviceId = await getDeviceId();
+  // When signed in, send the Bearer JWT so proxy.ts verifies it and injects the
+  // real x-user-id; anonymous requests fall back to the device header.
+  const authHeader = await getAuthHeader();
 
   let res: Response;
   try {
@@ -43,6 +47,7 @@ const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
       headers: {
         'Content-Type': 'application/json',
         [DEVICE_HEADER]: deviceId,
+        ...(authHeader ? { Authorization: authHeader } : {}),
         ...init?.headers,
       },
     });
@@ -223,3 +228,77 @@ export const commitOnboarding = (input: {
 // truth). See app/api/me/route.ts.
 export const getMe = (): Promise<{ userId: string }> =>
   request('/api/me', { method: 'GET' });
+
+// ─── Auth (mobile device-JWT bridge) ─────────────────────────────────────────
+// These hit /api/mobile/auth/*. The sign-in routes read the device via the
+// `Authorization: Device <id>` header (getMobileAuthFromHeaders), so we pass it
+// explicitly — the signed-in Bearer header isn't set until AFTER we get a token.
+
+type AuthResult = {
+  userId: string;
+  token: string;
+  isNewUser?: boolean;
+  wasMerged?: boolean;
+};
+
+const deviceAuthHeaders = (deviceId: string): Record<string, string> => ({
+  Authorization: `Device ${deviceId}`,
+});
+
+/** Register the device → anonymous user + a signed device token. */
+export const registerDevice = (
+  deviceId: string,
+): Promise<{ userId: string; token: string; isNew: boolean }> =>
+  request('/api/mobile/auth/register', {
+    method: 'POST',
+    body: JSON.stringify({ deviceId }),
+  });
+
+export const signInWithGoogle = (
+  deviceId: string,
+  idToken: string,
+): Promise<AuthResult> =>
+  request('/api/mobile/auth/google', {
+    method: 'POST',
+    headers: deviceAuthHeaders(deviceId),
+    body: JSON.stringify({ idToken }),
+  });
+
+export const signInWithApple = (
+  deviceId: string,
+  identityToken: string,
+  name?: string,
+): Promise<AuthResult> =>
+  request('/api/mobile/auth/apple', {
+    method: 'POST',
+    headers: deviceAuthHeaders(deviceId),
+    body: JSON.stringify({ identityToken, name }),
+  });
+
+export const signInWithFacebook = (
+  deviceId: string,
+  accessToken: string,
+): Promise<AuthResult> =>
+  request('/api/mobile/auth/facebook', {
+    method: 'POST',
+    headers: deviceAuthHeaders(deviceId),
+    body: JSON.stringify({ accessToken }),
+  });
+
+export const sendMagicLink = (
+  deviceId: string,
+  email: string,
+): Promise<{ sent: true }> =>
+  request('/api/mobile/auth/magic-link', {
+    method: 'POST',
+    headers: deviceAuthHeaders(deviceId),
+    body: JSON.stringify({ email }),
+  });
+
+// Redeem a magic-link token (opened from the deep link). The token carries the
+// email + deviceId (signed), so no extra headers needed.
+export const verifyMagicLink = (token: string): Promise<AuthResult> =>
+  request('/api/mobile/auth/magic-link/verify', {
+    method: 'POST',
+    body: JSON.stringify({ token }),
+  });

@@ -131,7 +131,11 @@ enum SubscriptionEventType {
 // "is Pro now?" is computed from the Subscription rows (no denormalised flag).
 model User {
   id                String    @id @default(cuid())
-  email             String?   @unique
+  email             String?   @unique // Optional for anonymous device users
+  // Auth.js profile fields (written by the PrismaAdapter on OAuth/magic-link).
+  name              String?
+  emailVerified     DateTime?
+  image             String?
   healthSyncEnabled Boolean   @default(false)
   units             Units     @default(METRIC)
   bodyShape         BodyShape @default(UNSPECIFIED)
@@ -141,14 +145,76 @@ model User {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
-  medications    Medication[]
-  weightLogs     WeightLog[]
-  sideEffectLogs SideEffectLog[]
-  intakeLogs     IntakeLog[]
-  reminders      Reminder[]
-  subscriptions  Subscription[]
+  medications          Medication[]
+  weightLogs           WeightLog[]
+  sideEffectLogs       SideEffectLog[]
+  intakeLogs           IntakeLog[]
+  reminders            Reminder[]
+  subscriptions        Subscription[]
+  // Auth.js relations
+  accounts             Account[]
+  sessions             Session[]
+  // Mobile device sessions (device id ↔ user, for the RN JWT bridge)
+  mobileDeviceSessions MobileDeviceSession[]
 
   @@map("users")
+}
+
+// ─── Auth.js (NextAuth v5) ────────────────────────────────────────────────────
+// Standard adapter tables (copied from chunky-crayon). The web uses database
+// sessions; mobile uses the separate MobileDeviceSession + device-JWT bridge.
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+// Links a mobile device id to a user for app auth. Separate from the NextAuth
+// Session table — mobile auth is a signed device-JWT, not a cookie session.
+model MobileDeviceSession {
+  id         String   @id @default(cuid())
+  deviceId   String   @unique
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastSeenAt DateTime @default(now())
+
+  @@map("mobile_device_sessions")
 }
 
 model Medication {

@@ -45,7 +45,11 @@ export async function POST(req: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
 
   let event: Stripe.Event;
-  if (secret && signature) {
+  if (secret) {
+    // A secret is configured (production): a valid signature is REQUIRED.
+    if (!signature) {
+      return Response.json({ error: 'Missing signature' }, { status: 400 });
+    }
     try {
       event = getStripe().webhooks.constructEvent(body, signature, secret);
     } catch (err) {
@@ -53,8 +57,12 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Bad request' }, { status: 400 });
     }
   } else {
-    // Dev only (no secret configured).
-    event = JSON.parse(body) as Stripe.Event;
+    // Dev only (no secret configured) — trust the body.
+    try {
+      event = JSON.parse(body) as Stripe.Event;
+    } catch {
+      return Response.json({ error: 'Bad request' }, { status: 400 });
+    }
   }
 
   if (await isProcessed(event.id)) {

@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react-native';
 import { PRO_PACKAGES } from '@titrra/types';
 import {
   createContext,
@@ -18,8 +19,9 @@ import {
   configurePurchases,
   findPackage,
   getCustomerInfo,
-  getOfferings,
+  getOfferingsWithRetry,
   hasPro,
+  offeringHasPackages,
   purchasePackage,
   restorePurchases,
 } from '@/lib/purchases';
@@ -118,17 +120,38 @@ export const PurchasesProvider = ({ children }: { children: ReactNode }) => {
 
       try {
         const [info, current] = await withTimeout(
-          Promise.all([getCustomerInfo(), getOfferings()]),
+          Promise.all([getCustomerInfo(), getOfferingsWithRetry()]),
           BOOT_TIMEOUT_MS,
         );
         if (cancelled) return;
         applyInfo(info);
-        setOffering(current);
-        setError(false);
+        // An offering that resolves but has no packages (StoreKit couldn't fetch
+        // the products — region gap, cold-launch race) is NOT a usable paywall.
+        // Treat it as a recoverable error so the UI shows Retry instead of a
+        // live "Start free trial" CTA backed by null packages (which would just
+        // toast "Plans are loading…" on every tap). See lib/purchases.ts.
+        if (offeringHasPackages(current)) {
+          setOffering(current);
+          setError(false);
+        } else {
+          // Capture to Sentry (default integrations don't forward console.error)
+          // so this is visible in prod — it's how we'd learn a live device is
+          // hitting a region/StoreKit gap instead of flying blind.
+          console.error(
+            '[purchases] offerings resolved but empty (no packages)',
+          );
+          Sentry.captureMessage(
+            'purchases: offerings resolved but empty (no packages)',
+            'error',
+          );
+          setOffering(null);
+          setError(true);
+        }
       } catch (err) {
         // Configure succeeded but customer-info/offerings failed or timed out.
         // Surface it so the UI offers Retry instead of a dead CTA / spinner.
         console.error('[purchases] boot failed', err);
+        Sentry.captureException(err, { tags: { area: 'purchases-boot' } });
         if (!cancelled) setError(true);
       } finally {
         if (!cancelled) setReady(true);

@@ -78,6 +78,43 @@ export const getOfferings = async (): Promise<PurchasesOffering | null> => {
   return offerings.all[DEFAULT_OFFERING] ?? offerings.current ?? null;
 };
 
+/**
+ * True when the offering has usable packages. RevenueCat can resolve an
+ * offering whose `availablePackages` is EMPTY when StoreKit hasn't finished its
+ * async product request yet (cold launch / flaky network) — the offering shell
+ * comes back but with no products attached. Treating that as "loaded" leaves the
+ * paywall with a live CTA backed by null packages (→ "Plans are loading…" on
+ * tap, with no way to recover). So callers must check this, not just non-null.
+ * See https://rev.cat/why-are-offerings-empty
+ */
+export const offeringHasPackages = (
+  offering: PurchasesOffering | null,
+): offering is PurchasesOffering =>
+  !!offering && offering.availablePackages.length > 0;
+
+/**
+ * Fetch offerings, retrying with backoff while the result is empty. StoreKit's
+ * product request is async and can lose the race with the first getOfferings()
+ * call right after configure(); a retry moments later usually populates it.
+ * Throws (like getOfferings) on a hard SDK/config error so the caller's catch
+ * can surface Retry. Returns a non-empty offering, or null if still empty after
+ * all attempts (caller treats null as recoverable, not silent success).
+ */
+export const getOfferingsWithRetry = async (
+  attempts = 3,
+  delayMs = 800,
+): Promise<PurchasesOffering | null> => {
+  let last: PurchasesOffering | null = null;
+  for (let i = 0; i < attempts; i += 1) {
+    last = await getOfferings();
+    if (offeringHasPackages(last)) return last;
+    if (i < attempts - 1) {
+      await new Promise((resolve) => setTimeout(resolve, delayMs * (i + 1)));
+    }
+  }
+  return offeringHasPackages(last) ? last : null;
+};
+
 /** True when the customer holds the active Pro entitlement. */
 export const hasPro = (info: CustomerInfo): boolean =>
   info.entitlements.active[PRO_ENTITLEMENT] !== undefined;

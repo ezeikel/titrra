@@ -33,12 +33,22 @@ const SiteNav = () => (
           </a>
         ))}
       </div>
-      <a
-        href="#top"
-        className="rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-deep"
-      >
-        Get the app
-      </a>
+      <div className="flex items-center gap-4">
+        {/* Anonymous-first: Titrra works without an account, but the link is
+            always here so you can sign in to sync across devices. */}
+        <a
+          href="/signin"
+          className="text-sm font-medium text-muted-foreground transition hover:text-ink"
+        >
+          Sign in
+        </a>
+        <a
+          href="#top"
+          className="rounded-lg bg-teal px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-deep"
+        >
+          Get the app
+        </a>
+      </div>
     </nav>
   </header>
 );

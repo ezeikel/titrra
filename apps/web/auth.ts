@@ -110,6 +110,20 @@ const config = {
   secret: process.env.NEXT_AUTH_SECRET,
 } satisfies NextAuthConfig;
 
+// Which providers are actually wired up (real server env), so the sign-in UI
+// renders exactly the configured buttons. Computed here (server) instead of the
+// client, since NEXT_PUBLIC_* flags aren't set in prod and would hide Apple/
+// Facebook even though their credentials exist.
+export const configuredProviders = {
+  google: !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET),
+  apple: !!(process.env.APPLE_CLIENT_ID && appleClientSecret),
+  facebook: !!(
+    process.env.FACEBOOK_CONSUMER_APP_ID &&
+    process.env.FACEBOOK_CONSUMER_APP_SECRET
+  ),
+  resend: !!process.env.RESEND_API_KEY,
+};
+
 export const {
   handlers,
   auth,

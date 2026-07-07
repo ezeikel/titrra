@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
 import { Suspense } from 'react';
-import { auth } from '@/auth';
+import { auth, configuredProviders } from '@/auth';
 import SiteFooter from '@/components/SiteFooter';
 import SiteNav from '@/components/SiteNav';
 import SignInOptions from './SignInOptions';
@@ -29,7 +29,7 @@ const SignInBody = async ({ searchParams }: { searchParams: SearchParams }) => {
   const session = await auth();
   if (session?.user) redirect(dest);
 
-  return <SignInOptions callbackUrl={dest} />;
+  return <SignInOptions callbackUrl={dest} providers={configuredProviders} />;
 };
 
 const SignInPage = ({ searchParams }: { searchParams: SearchParams }) => (

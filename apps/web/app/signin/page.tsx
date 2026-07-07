@@ -1,7 +1,8 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { Suspense } from 'react';
-import { auth, configuredProviders } from '@/auth';
+import { auth, getConfiguredProviders } from '@/auth';
 import SiteFooter from '@/components/SiteFooter';
 import SiteNav from '@/components/SiteNav';
 import SignInOptions from './SignInOptions';
@@ -23,13 +24,24 @@ const safeCallback = (raw?: string) =>
 // Dynamic — reads searchParams + session, so it lives behind Suspense
 // (cacheComponents requires uncached data to be wrapped).
 const SignInBody = async ({ searchParams }: { searchParams: SearchParams }) => {
+  await connection();
+
   const { callbackUrl } = await searchParams;
   const dest = safeCallback(callbackUrl);
 
-  const session = await auth();
-  if (session?.user) redirect(dest);
+  let signedIn = false;
+  try {
+    const session = await auth();
+    signedIn = !!session?.user;
+  } catch {
+    signedIn = false;
+  }
+  // redirect() throws by design, so it must run OUTSIDE the try/catch above.
+  if (signedIn) redirect(dest);
 
-  return <SignInOptions callbackUrl={dest} providers={configuredProviders} />;
+  return (
+    <SignInOptions callbackUrl={dest} providers={getConfiguredProviders()} />
+  );
 };
 
 const SignInPage = ({ searchParams }: { searchParams: SearchParams }) => (

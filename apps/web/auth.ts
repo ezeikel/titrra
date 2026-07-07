@@ -18,18 +18,28 @@ import { generateAppleClientSecret } from '@/lib/apple';
 // Apple's client secret is a short-lived ES256 JWT, generated at module init.
 // Skipped (empty string) when any Apple env var is missing so dev/build still
 // starts — the provider only throws if a user actually attempts Apple sign-in.
-const appleClientSecret =
+let appleClientSecret = '';
+if (
   process.env.APPLE_TEAM_ID &&
   process.env.APPLE_KEY_ID &&
   process.env.APPLE_CLIENT_ID &&
   process.env.APPLE_PRIVATE_KEY
-    ? await generateAppleClientSecret({
-        teamId: process.env.APPLE_TEAM_ID,
-        keyId: process.env.APPLE_KEY_ID,
-        clientId: process.env.APPLE_CLIENT_ID,
-        privateKey: process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-      })
-    : '';
+) {
+  try {
+    appleClientSecret = await generateAppleClientSecret({
+      teamId: process.env.APPLE_TEAM_ID,
+      keyId: process.env.APPLE_KEY_ID,
+      clientId: process.env.APPLE_CLIENT_ID,
+      privateKey: process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    });
+  } catch (error) {
+    // Leave appleClientSecret empty so the Apple provider is simply not added.
+    console.error(
+      'Apple client secret generation failed; Apple sign-in disabled.',
+      error,
+    );
+  }
+}
 
 const providers: Provider[] = [];
 

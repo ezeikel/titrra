@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { redirect } from 'next/navigation';
-import { connection } from 'next/server';
 import { Suspense } from 'react';
 import { auth, getConfiguredProviders } from '@/auth';
 import SiteFooter from '@/components/SiteFooter';
@@ -21,14 +20,15 @@ type SearchParams = Promise<{ callbackUrl?: string }>;
 const safeCallback = (raw?: string) =>
   raw && /^\/(?!\/)/.test(raw) ? raw : '/';
 
-// Dynamic — reads searchParams + session, so it lives behind Suspense
-// (cacheComponents requires uncached data to be wrapped).
-const SignInBody = async ({ searchParams }: { searchParams: SearchParams }) => {
-  await connection();
-
+// Bounce already-signed-in visitors. Isolated in its own Suspense boundary so the
+// buttons never depend on this auth() lookup; auth() is wrapped so a failure can't
+// break the page, and redirect() (which throws) runs outside the try.
+const RedirectIfSignedIn = async ({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) => {
   const { callbackUrl } = await searchParams;
-  const dest = safeCallback(callbackUrl);
-
   let signedIn = false;
   try {
     const session = await auth();
@@ -36,31 +36,38 @@ const SignInBody = async ({ searchParams }: { searchParams: SearchParams }) => {
   } catch {
     signedIn = false;
   }
-  // redirect() throws by design, so it must run OUTSIDE the try/catch above.
-  if (signedIn) redirect(dest);
-
-  return (
-    <SignInOptions callbackUrl={dest} providers={getConfiguredProviders()} />
-  );
+  if (signedIn) redirect(safeCallback(callbackUrl));
+  return null;
 };
 
-const SignInPage = ({ searchParams }: { searchParams: SearchParams }) => (
-  <div className="flex min-h-svh flex-col bg-sand">
-    <SiteNav />
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-ink">Sign in</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Keep your tracking in sync across your devices and the web. Titrra
-          works fully without an account, too.
-        </p>
-      </div>
-      <Suspense fallback={null}>
-        <SignInBody searchParams={searchParams} />
-      </Suspense>
-    </main>
-    <SiteFooter />
-  </div>
-);
+// The buttons render from getConfiguredProviders() (a plain process.env read — NOT
+// a cacheComponents "uncached" source, so it's fine in the static shell) and
+// SignInOptions reads callbackUrl client-side. So the buttons are in the static
+// prerendered HTML; only the signed-in redirect streams behind Suspense. (A
+// Suspense body that streamed the buttons failed in prod, leaving an empty card.)
+const SignInPage = ({ searchParams }: { searchParams: SearchParams }) => {
+  const providers = getConfiguredProviders();
+  return (
+    <div className="flex min-h-svh flex-col bg-sand">
+      <SiteNav />
+      <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center px-4 py-16">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold tracking-tight text-ink">
+            Sign in
+          </h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Keep your tracking in sync across your devices and the web. Titrra
+            works fully without an account, too.
+          </p>
+        </div>
+        <SignInOptions providers={providers} />
+        <Suspense fallback={null}>
+          <RedirectIfSignedIn searchParams={searchParams} />
+        </Suspense>
+      </main>
+      <SiteFooter />
+    </div>
+  );
+};
 
 export default SignInPage;

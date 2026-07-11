@@ -8,11 +8,12 @@ Projects currently sharing this file:
 
 - [`ezeikel/auntie-marlenes`](https://github.com/ezeikel/auntie-marlenes)
 - [`ezeikel/parking-ticket-pal-worker`](https://github.com/ezeikel/parking-ticket-pal-worker)
-- [`ezeikel/chunky-crayon`](https://github.com/ezeikel/chunky-crayon) → this repo
+- [`ezeikel/chunky-crayon`](https://github.com/ezeikel/chunky-crayon)
+- [`ezeikel/genwel`](https://github.com/ezeikel/genwel)
 - [`ezeikel/ezeikel`](https://github.com/ezeikel/ezeikel)
 - [`ezeikel/go-unbeaten`](https://github.com/ezeikel/go-unbeaten)
 - [`ezeikel/outside-ir35-jobs-web`](https://github.com/ezeikel/outside-ir35-jobs-web)
-- [`ezeikel/titrra`](https://github.com/ezeikel/titrra)
+- [`ezeikel/titrra`](https://github.com/ezeikel/titrra) → this repo
 
 ---
 

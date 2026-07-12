@@ -14,7 +14,16 @@ Marlene's, Ezeikel, Go Unbeaten and Outside-IR35 workers. See the repo-root
 | **Worker subdir** | `apps/worker/`                                         |
 | **Systemd unit**  | `titrra-worker.service`                                |
 | **Runtime**       | Bun (no `xvfb-run` — no Playwright)                    |
-| **Role**          | AI blog generation for SEO; image-gen / AI-UGC later   |
+| **Role**          | AI blog generation (Sanity drafts) + social auto-post  |
+
+## Endpoints
+
+- `GET  /health` — unauthenticated liveness.
+- `POST /generate/blog` — draft one GLP-1 blog post into Sanity (human reviews).
+- `POST /generate/social` — generate a compliant caption + gpt-image-2 image
+  (hosted on R2 → `assets.titrra.com`) and publish it to the Titrra Facebook
+  Page. Publishes live (no draft gate). All privileged routes require
+  `Authorization: Bearer <WORKER_SECRET>`.
 
 ## First-time setup on the box
 
@@ -32,9 +41,15 @@ Marlene's, Ezeikel, Go Unbeaten and Outside-IR35 workers. See the repo-root
 - `WORKER_SECRET` — bearer token for `/generate/*` + `/publish/*`; MUST match
   the value set on the web app (Vercel + `apps/web/.env.local`).
 - `DATABASE_URL` — Neon **prod** URL (shared Prisma client `@titrra/db`).
-- `ANTHROPIC_API_KEY` — Claude, for blog generation.
+- `ANTHROPIC_API_KEY` — Claude, for blog generation + social captions.
 - `SANITY_PROJECT_ID`, `SANITY_DATASET`, `SANITY_API_VERSION`,
   `SANITY_WRITE_TOKEN` — the blog CMS write path.
+- **Social auto-post** (`/generate/social` only):
+  - `OPENAI_API_KEY` — gpt-image-2 image generation.
+  - `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`
+    (=`titrra-prod`), `R2_PUBLIC_URL` (=`https://assets.titrra.com`) — hosts the
+    generated image so Facebook can fetch it.
+  - `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` — long-lived Page token.
 - `SENTRY_DSN` — `titrra-worker` Sentry project DSN (omit to disable reporting).
 
 ## Deploying changes

@@ -6,10 +6,11 @@ on:
       - main
     paths:
       - 'apps/worker/**'
-      # The worker imports the shared Prisma client + types. Changes there
-      # must redeploy the worker or it runs against a stale client.
+      # The worker imports the shared Prisma client + types + R2 storage.
+      # Changes there must redeploy the worker or it runs against stale code.
       - 'packages/db/**'
       - 'packages/types/**'
+      - 'packages/storage/**'
       - '.github/workflows/deploy-titrra-worker.yml'
   workflow_dispatch:
     inputs:

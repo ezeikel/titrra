@@ -7,6 +7,7 @@ import { serve } from '@hono/node-server';
 import { type Context, Hono } from 'hono';
 import { logger } from 'hono/logger';
 import { runBlogCron } from './blog/pipeline.js';
+import { runSocialCron } from './social/pipeline.js';
 
 // Titrra content worker. Runs on the shared Hetzner box (port 3070) as the
 // `titrra-worker` systemd service. Its first job is AI blog generation for the
@@ -52,6 +53,20 @@ app.post('/generate/blog', (c) => {
   console.log('[/generate/blog] kickoff');
   runBlogCron().catch((err) =>
     console.error('[/generate/blog] uncaught:', err),
+  );
+  return c.json({ ok: true, accepted: true }, 202);
+});
+
+// POST /generate/social — generate + publish one Facebook photo post
+// (compliant caption + gpt-image-2 image hosted on R2 → FB Page /photos).
+// Fire-and-forget: ack immediately, run in the background. Unlike the blog,
+// social posts publish live (no human-review gate) — that's the point of an
+// auto-poster. The theme copy/art is constrained to be utility-only (no weight
+// / outcome / efficacy claims), see social/topics.ts.
+app.post('/generate/social', (c) => {
+  console.log('[/generate/social] kickoff');
+  runSocialCron().catch((err) =>
+    console.error('[/generate/social] uncaught:', err),
   );
   return c.json({ ok: true, accepted: true }, 202);
 });

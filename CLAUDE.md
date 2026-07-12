@@ -53,6 +53,39 @@ teardown: `docs/GLP1-RESEARCH-AND-SPEC.md`.
 - Never recommend a dose change. Never diagnose. The titration ladder shows the
   user's OWN plan, with provider-consult prompts.
 
+## Content pipeline (AI blog + social auto-post) — `apps/worker`
+
+Both content systems run on the shared Hetzner worker (`@titrra/worker`, port
+3070, Bun on box / tsx locally). Vercel cron → thin Next route (`CRON_SECRET`
+bearer) → `postToWorker()` (`WORKER_SECRET` bearer) → worker endpoint. The web
+app has NO AI SDK; all generation is worker-side. Env for the trigger lives on
+Vercel (`WORKER_URL`, `WORKER_SECRET`, `CRON_SECRET`) — if the blog/social "isn't
+firing," check those three exist on Vercel first (a missing `WORKER_URL` makes
+the cron route 502 before it ever reaches the box).
+
+- **Blog** (`src/blog/*`): `POST /generate/blog`. Claude (`claude-sonnet-5`)
+  drafts one GLP-1 post → Sanity as **status:'draft'** (health content is NEVER
+  auto-published; a human reviews + publishes in `/studio`). Idempotency key =
+  top-level `sourceTopic`; topic set in `src/blog/topics.ts` (never rename an
+  existing topic string — a rename un-covers it → duplicate). Cron: Mon 06:00 UTC.
+- **Social** (`src/social/*`): `POST /generate/social`. Claude caption +
+  `gpt-image-2` image → uploaded to R2 (`@titrra/storage`, prod bucket serves via
+  `assets.titrra.com`) → published to the Facebook Page via Graph `v22.0
+  /{PAGE_ID}/photos` (FB fetches the hosted image URL). Publishes **live** (no
+  draft gate — that's the point of an auto-poster). Cron: Tue/Thu/Sat 17:00 UTC.
+  - **Compliance is enforced in the prompts + theme copy** (`src/social/topics.ts`,
+    `CAPTION_SYSTEM` in `pipeline.ts`): utility-first only — NEVER weight/outcome/
+    efficacy/before-after claims, no dose advice, no fabricated stats/ratings, no
+    em dashes. Sell the ROUTINE, never the outcome. Images show no people, bodies,
+    needles, pills, or scales.
+  - Dry-run a caption without image/FB: `pnpm --filter @titrra/worker social:run
+    --dry-run` (needs only `ANTHROPIC_API_KEY`). Blog equivalent: `blog:run
+    --dry-run`.
+- **Worker social env** (box + `.env.example`): `OPENAI_API_KEY`, `R2_ENDPOINT`/
+  `R2_ACCESS_KEY_ID`/`R2_SECRET_ACCESS_KEY`/`R2_BUCKET`/`R2_PUBLIC_URL`,
+  `FACEBOOK_PAGE_ID`, `FACEBOOK_PAGE_ACCESS_TOKEN` (long-lived Page token, NOT a
+  user token). See `apps/worker/deploy/README.md`.
+
 ## Commands
 
 - `pnpm dev:web` — Next.js dev server. `pnpm dev:mobile` — Expo.
@@ -128,6 +161,26 @@ Per-app (create fresh): the OAuth **client IDs** (Google web/iOS/Android, Apple
 Services ID), the RevenueCat per-app SA, `NEXT_AUTH_SECRET`/`MOBILE_AUTH_SECRET`.
 `.p8` files are gitignored in-repo (`*.p8` in `.gitignore`, same as CC/PTP) —
 the canonical copy lives in iCloud, never committed.
+
+## R2 storage (hosted images for AI blog + social auto-post)
+
+Cloudflare R2, same shared CF account as every Chewy Bytes app (endpoint host
+`3b270a88f8cd0aaf0e9f28f6683a7a85`, account-level access keys reused). Two
+buckets, same `<app>-dev`/`<app>-prod` convention as CC/PTP:
+
+| Bucket | `R2_PUBLIC_URL` | Notes |
+|---|---|---|
+| `titrra-dev` | `https://pub-e757775855054965887b92247ebe9dad.r2.dev` | dev serves via the managed public dev URL |
+| `titrra-prod` | `https://assets.titrra.com` | **custom domain only** — the raw `pub-*.r2.dev` dev URL is DISABLED (matches CC/PTP prod: prod never serves via `pub-*.r2.dev`) |
+
+- Storage client will be a shared package `@titrra/storage` (copy CC's
+  `packages/storage/src/r2.ts` — `@aws-sdk/client-s3`, `put(pathname, body,
+  {access, contentType})` → `{url: ${R2_PUBLIC_URL}/${pathname}, pathname}`).
+- Env: `R2_ENDPOINT`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET`,
+  `R2_PUBLIC_URL` (per-environment). Used by the **worker** (image-gen upload)
+  and any web read path.
+- FB `/photos` publish fetches the image from a **publicly hosted** URL, so
+  generated images must land in R2 first (prod → `assets.titrra.com`).
 
 ## Commits
 

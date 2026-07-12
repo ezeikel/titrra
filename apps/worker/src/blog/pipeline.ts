@@ -1,6 +1,7 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
+import { generateDynamicTopics } from './dynamic-topics.js';
 import { markdownToPortableText } from './markdown-to-portable-text.js';
 import {
   coveredTopicsQuery,
@@ -9,7 +10,11 @@ import {
   topicExistsQuery,
   writeClient,
 } from './sanity.js';
-import { pickRandomAuthor, pickUncoveredTopic } from './topics.js';
+import {
+  pickRandomAuthor,
+  pickUncoveredTopic,
+  seedTopicSlugs,
+} from './topics.js';
 
 const model = anthropic('claude-sonnet-5');
 
@@ -37,16 +42,28 @@ Rules:
 
 type RunOpts = { topicOverride?: string; dryRun?: boolean };
 
-// Generate one GLP-1 blog post and write it to Sanity as a DRAFT (health
-// content is never auto-published — a human reviews + publishes in Studio).
+// Generate one GLP-1 blog post and PUBLISH it to Sanity. Runs daily; topic
+// supply is guaranteed by the fixed seed list plus a dynamic AI topic generator
+// (never runs dry). Compliance lives in the prompt, not a review gate.
 export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
   try {
     const covered = new Set(
       await readClient.fetch<string[]>(coveredTopicsQuery).catch(() => []),
     );
-    const topic = pickUncoveredTopic(covered, opts.topicOverride);
+    let topic = pickUncoveredTopic(covered, opts.topicOverride);
+
+    // NEVER-DRY fallback: the fixed seed list is finite, so once daily
+    // generation exhausts it, ask Claude for fresh, deduped topics. This is what
+    // lets Titrra post daily indefinitely. Skipped when a topicOverride is set.
+    if (!topic && !opts.topicOverride) {
+      console.log('[blog] seed list exhausted, generating dynamic topics');
+      const dynamic = await generateDynamicTopics(covered, seedTopicSlugs());
+      topic = dynamic[0] ?? null;
+      if (topic) console.log(`[blog] dynamic topic: ${topic.topic}`);
+    }
+
     if (!topic) {
-      console.warn('[blog] no uncovered topic available');
+      console.warn('[blog] no uncovered topic available (dynamic gen empty)');
       return;
     }
 
@@ -110,7 +127,10 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
       authorRef = created._id;
     }
 
-    // Write the post — ALWAYS status:'draft' (health compliance gate).
+    // Write the post. Auto-published (status:'published') — compliance is
+    // enforced entirely in the generation prompt (education-not-advice, no dose
+    // instructions, no fabricated stats, no em dashes), since there is no
+    // human-review gate. See BODY_SYSTEM / META_SYSTEM above.
     await writeClient.create({
       _type: 'post',
       title: stripEmDashes(meta.title),
@@ -121,12 +141,12 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
       body,
       author: { _type: 'reference', _ref: authorRef },
       publishedAt: new Date().toISOString(),
-      status: 'draft',
+      status: 'published',
       sourceTopic: topic.topic,
       generatedAt: new Date().toISOString(),
       model: 'claude-sonnet-5',
     });
-    console.log(`[blog] draft created: ${meta.slug}`);
+    console.log(`[blog] published: ${meta.slug}`);
   } catch (err) {
     console.error('[blog] pipeline failed:', err);
     throw err;

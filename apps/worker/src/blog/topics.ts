@@ -181,11 +181,33 @@ export const BLOG_TOPICS: BlogTopic[] = [
   },
 ];
 
+// Persona authors — a small set of subject-fitting bylines, round-robin/random
+// assigned to generated posts. Educational voices in the GLP-1 space. Bios stay
+// honest about scope (education, not medical advice) and carry no fabricated
+// credentials that imply clinical authority to prescribe.
 export const BLOG_AUTHORS: BlogAuthor[] = [
   {
-    name: 'Titrra Team',
-    slug: 'titrra-team',
+    name: 'Priya Anand',
+    slug: 'priya-anand',
     title: 'GLP-1 educator',
+    bio: 'Priya writes clear, evidence-informed guides for people navigating GLP-1 medications and the routine around them. Education only, not medical advice.',
+  },
+  {
+    name: 'Marcus Reid',
+    slug: 'marcus-reid',
+    title: 'Health writer',
+    bio: 'Marcus covers weight-management medication, side effects, and the day-to-day of staying consistent. He always points readers back to their own clinician.',
+  },
+  {
+    name: 'Sofia Kessler',
+    slug: 'sofia-kessler',
+    title: 'Nutrition & routine writer',
+    bio: 'Sofia focuses on eating well, staying hydrated, and building sustainable habits alongside GLP-1 treatment. Practical, calm, non-judgemental.',
+  },
+  {
+    name: 'The Titrra Team',
+    slug: 'titrra-team',
+    title: 'Titrra editorial',
     bio: 'The Titrra team writes evidence-informed guides for people on GLP-1 medications. Educational only, not medical advice.',
   },
 ];
@@ -201,6 +223,11 @@ export function pickUncoveredTopic(
   if (open.length === 0) return null;
   return open[Math.floor(Math.random() * open.length)];
 }
+
+// All fixed seed slugs — used by the dynamic generator to avoid re-proposing a
+// topic that already lives in the seed list.
+export const seedTopicSlugs = (): Set<string> =>
+  new Set(BLOG_TOPICS.map((t) => t.topic));
 
 export const pickRandomAuthor = (): BlogAuthor =>
   BLOG_AUTHORS[Math.floor(Math.random() * BLOG_AUTHORS.length)];

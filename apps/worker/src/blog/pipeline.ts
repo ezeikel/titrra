@@ -19,6 +19,25 @@ import {
 
 const model = anthropic('claude-sonnet-5');
 
+// After publishing, tell the web app to bust its blog cache so the post appears
+// immediately (the blog pages use cacheTag('blog-list'/'blog-posts')). No-op if
+// WEB_URL or CRON_SECRET is unset. Non-fatal: never fails the publish.
+async function revalidateWebBlog(): Promise<void> {
+  const webUrl = process.env.WEB_URL?.replace(/\/+$/, '');
+  const secret = process.env.CRON_SECRET;
+  if (!webUrl || !secret) return;
+  try {
+    const res = await fetch(`${webUrl}/api/revalidate`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${secret}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    console.log(`[blog] revalidate web blog: ${res.status}`);
+  } catch (err) {
+    console.error('[blog] revalidate failed (non-fatal):', err);
+  }
+}
+
 // Em dashes read as AI-generated; swap for commas / hyphens (house style).
 const stripEmDashes = (s: string): string =>
   s.replace(/\s*—\s*/g, ', ').replace(/—/g, '-');
@@ -156,6 +175,7 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
     console.log(
       `[blog] published: ${meta.slug}${mainImage ? ' (with image)' : ''}`,
     );
+    await revalidateWebBlog();
   } catch (err) {
     console.error('[blog] pipeline failed:', err);
     throw err;

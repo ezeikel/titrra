@@ -2,6 +2,7 @@ import { anthropic } from '@ai-sdk/anthropic';
 import { generateText, Output } from 'ai';
 import { z } from 'zod';
 import { generateDynamicTopics } from './dynamic-topics.js';
+import { generateBlogMainImage } from './image.js';
 import { markdownToPortableText } from './markdown-to-portable-text.js';
 import {
   coveredTopicsQuery,
@@ -127,6 +128,11 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
       authorRef = created._id;
     }
 
+    // Featured image: Pexels high-match (Opus 4.8 judge) → gpt-image-2 high
+    // fallback → Sanity asset. Non-blocking: returns undefined on failure and
+    // the post publishes without an image rather than not at all.
+    const mainImage = await generateBlogMainImage(meta.title, meta.excerpt);
+
     // Write the post. Auto-published (status:'published') — compliance is
     // enforced entirely in the generation prompt (education-not-advice, no dose
     // instructions, no fabricated stats, no em dashes), since there is no
@@ -139,6 +145,7 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
       estimatedReadTime: meta.estimatedReadTime,
       seoKeywords: meta.seoKeywords,
       body,
+      ...(mainImage ? { mainImage } : {}),
       author: { _type: 'reference', _ref: authorRef },
       publishedAt: new Date().toISOString(),
       status: 'published',
@@ -146,7 +153,9 @@ export async function runBlogCron(opts: RunOpts = {}): Promise<void> {
       generatedAt: new Date().toISOString(),
       model: 'claude-sonnet-5',
     });
-    console.log(`[blog] published: ${meta.slug}`);
+    console.log(
+      `[blog] published: ${meta.slug}${mainImage ? ' (with image)' : ''}`,
+    );
   } catch (err) {
     console.error('[blog] pipeline failed:', err);
     throw err;

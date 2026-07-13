@@ -27,7 +27,7 @@ const SiteFooter = () => (
         </a>
       </div>
       <p className="mt-8 text-xs text-muted-foreground">
-        © {COPYRIGHT_YEAR} Chewy Bytes. All rights reserved.
+        © {COPYRIGHT_YEAR} Titrra. All rights reserved.
       </p>
     </div>
   </footer>

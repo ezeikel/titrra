@@ -9,6 +9,12 @@ honest single-tier pricing and a calmer, more premium UX. Pure CRUD logging
 companion — NOT medical advice, NOT a calorie app. Product spec + competitor
 teardown: `docs/GLP1-RESEARCH-AND-SPEC.md`.
 
+## Current AI models
+Use the latest model ids from `~/Development/Personal/scripts/model-registry/LATEST-MODELS.md`
+(live provider snapshot — supersedes training data). Fleet defaults: text = claude-sonnet-5,
+vision judge = claude-opus-4-8, image gen = gpt-image-2 (gpt-image-1.5 where speed matters),
+search = sonar. Regenerate: `tsx ~/Development/Personal/scripts/model-registry/fetch-models.ts`.
+
 ## Structure
 
 - Turborepo + pnpm workspaces, patterned after `~/Development/Personal/go-unbeaten`.

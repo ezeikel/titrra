@@ -32,13 +32,16 @@
     "husky": "^9.1.7",
     "lint-staged": "^16.0.0",
     "turbo": "^2.5.6",
-    "typescript": "^5.7.3"
+    "typescript": "~6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@prisma/engines",
       "@sentry/cli",
       "@shopify/react-native-skia",
       "core-js",
+      "esbuild",
+      "prisma",
       "sharp",
       "unrs-resolver"
     ],

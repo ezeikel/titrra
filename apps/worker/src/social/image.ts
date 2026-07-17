@@ -2,7 +2,7 @@ import { openai } from '@ai-sdk/openai';
 import { put } from '@titrra/storage';
 import { experimental_generateImage as generateImage } from 'ai';
 
-// gpt-image-2 — same image model Chunky Crayon + PTP use. nano-banana-2 is
+// gpt-image-2 — same image model Chunky Crayon + PTP use. nano-banana-pro is
 // reserved for photorealistic human personas (AI-UGC), which this is not.
 const IMAGE_MODEL_ID = 'gpt-image-2';
 

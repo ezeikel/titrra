@@ -1,0 +1,209 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "group:monorepos",
+    "group:recommended",
+    ":separateMajorReleases",
+    ":semanticCommits"
+  ],
+  "timezone": "Europe/London",
+  "schedule": ["before 7am on Monday"],
+  "prHourlyLimit": 3,
+  "prConcurrentLimit": 5,
+  "rangeStrategy": "bump",
+  "labels": ["dependencies"],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["before 5am on the first day of the month"],
+    "automerge": true
+  },
+  "ignoreDeps": [
+    "expo",
+    "expo-router",
+    "expo-apple-authentication",
+    "expo-application",
+    "expo-asset",
+    "expo-blur",
+    "expo-build-properties",
+    "expo-constants",
+    "expo-dev-client",
+    "expo-device",
+    "expo-file-system",
+    "expo-font",
+    "expo-gl",
+    "expo-haptics",
+    "expo-linking",
+    "expo-notifications",
+    "expo-secure-store",
+    "expo-splash-screen",
+    "expo-status-bar",
+    "expo-system-ui",
+    "expo-updates",
+    "@expo/metro-runtime",
+    "react-native",
+    "react-native-gesture-handler",
+    "react-native-reanimated",
+    "react-native-screens",
+    "react-native-safe-area-context",
+    "react-native-svg",
+    "react-native-web",
+    "react-native-worklets",
+    "react-native-wgpu",
+    "react-native-webgpu",
+    "@shopify/react-native-skia",
+    "@sentry/react-native",
+    "three",
+    "@types/three",
+    "@react-three/fiber",
+    "react",
+    "react-dom",
+    "nativewind",
+    "react-native-css",
+    "next-auth"
+  ],
+  "packageRules": [
+    {
+      "description": "Patch updates for web app — automerge",
+      "matchFileNames": ["apps/web/package.json"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "patch-web",
+      "automerge": true,
+      "schedule": ["before 7am on Monday"]
+    },
+    {
+      "description": "Patch updates for mobile app — manual merge (native risk)",
+      "matchFileNames": ["apps/mobile/package.json"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "patch-mobile",
+      "automerge": false,
+      "schedule": ["before 7am on Monday"],
+      "labels": ["dependencies", "mobile", "needs-native-test"]
+    },
+    {
+      "description": "Patch updates for worker + shared packages — automerge",
+      "matchFileNames": ["apps/worker/package.json", "packages/*/package.json"],
+      "matchUpdateTypes": ["patch"],
+      "groupName": "patch-shared",
+      "automerge": true,
+      "schedule": ["before 7am on Monday"]
+    },
+    {
+      "description": "Minor updates for web app",
+      "matchFileNames": ["apps/web/package.json"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "minor-web",
+      "automerge": false,
+      "schedule": ["before 7am on the 1st and 15th day of the month"]
+    },
+    {
+      "description": "Minor updates for mobile app",
+      "matchFileNames": ["apps/mobile/package.json"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "minor-mobile",
+      "automerge": false,
+      "schedule": ["before 7am on the 1st and 15th day of the month"],
+      "labels": ["dependencies", "mobile", "needs-native-test"]
+    },
+    {
+      "description": "Minor updates for worker + shared packages",
+      "matchFileNames": ["apps/worker/package.json", "packages/*/package.json"],
+      "matchUpdateTypes": ["minor"],
+      "groupName": "minor-shared",
+      "automerge": false,
+      "schedule": ["before 7am on the 1st and 15th day of the month"]
+    },
+    {
+      "description": "Major updates — individual PRs, monthly",
+      "matchUpdateTypes": ["major"],
+      "automerge": false,
+      "schedule": ["before 7am on the first day of the month"],
+      "labels": ["dependencies", "major-upgrade"]
+    },
+    {
+      "description": "Dev tools — automerge",
+      "matchDepTypes": ["devDependencies"],
+      "matchPackageNames": [
+        "@biomejs/biome",
+        "@types/*",
+        "husky",
+        "lint-staged",
+        "turbo"
+      ],
+      "groupName": "dev-tools",
+      "automerge": true
+    },
+    {
+      "description": "Prisma — group client + CLI",
+      "matchPackageNames": ["prisma", "@prisma/client", "@prisma/adapter-neon"],
+      "groupName": "prisma",
+      "automerge": false,
+      "labels": ["dependencies", "database"]
+    },
+    {
+      "description": "FontAwesome free packages — look up from public npmjs.org",
+      "matchPackageNames": [
+        "@fortawesome/fontawesome-svg-core",
+        "@fortawesome/free-solid-svg-icons",
+        "@fortawesome/free-brands-svg-icons",
+        "@fortawesome/react-fontawesome",
+        "@fortawesome/react-native-fontawesome"
+      ],
+      "registryUrls": ["https://registry.npmjs.org"],
+      "groupName": "fontawesome-free"
+    },
+    {
+      "description": "FontAwesome Pro packages — disabled, npm.fontawesome.com doesn't support Renovate's lookup API",
+      "matchPackageNames": [
+        "@fortawesome/pro-light-svg-icons",
+        "@fortawesome/pro-regular-svg-icons",
+        "@fortawesome/pro-solid-svg-icons",
+        "@fortawesome/pro-duotone-svg-icons"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Base UI — automerge",
+      "matchPackageNames": ["@base-ui/**"],
+      "groupName": "base-ui",
+      "automerge": true
+    },
+    {
+      "description": "AI SDK — group together (keep ai@6 ↔ @ai-sdk v3 pairing)",
+      "matchPackageNames": ["@ai-sdk/**", "ai", "openai"],
+      "groupName": "ai-sdk",
+      "automerge": false
+    },
+    {
+      "description": "Sentry — group together",
+      "matchPackageNames": ["@sentry/**"],
+      "groupName": "sentry",
+      "automerge": false
+    },
+    {
+      "description": "PostHog — group together, automerge",
+      "matchPackageNames": ["posthog-*", "@posthog/*"],
+      "groupName": "posthog",
+      "automerge": true
+    },
+    {
+      "description": "Sanity — group together",
+      "matchPackageNames": ["sanity", "next-sanity", "@sanity/**"],
+      "groupName": "sanity",
+      "automerge": false
+    },
+    {
+      "description": "Stripe — group together",
+      "matchPackageNames": ["stripe", "@stripe/**"],
+      "groupName": "stripe",
+      "automerge": false
+    },
+    {
+      "description": "RevenueCat — native purchase SDK, manual merge",
+      "matchPackageNames": ["react-native-purchases"],
+      "groupName": "revenuecat",
+      "automerge": false,
+      "labels": ["dependencies", "mobile", "needs-native-test"]
+    }
+  ]
+}

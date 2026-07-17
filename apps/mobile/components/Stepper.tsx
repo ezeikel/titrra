@@ -36,7 +36,6 @@ export const Stepper = ({
 
   // Springy bounce on the numeral whenever the value changes.
   const scale = useSharedValue(1);
-  // biome-ignore lint/correctness/useExhaustiveDependencies: bounce on value change
   useEffect(() => {
     scale.value = withSequence(
       withSpring(1.12, SPRING_BOUNCE),

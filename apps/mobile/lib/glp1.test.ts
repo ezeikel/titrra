@@ -1,14 +1,17 @@
 import { buildLadder } from '@titrra/types';
 import { describe, expect, it } from 'vitest';
-import { DRUGS, getDrugMeta } from '@/lib/glp1';
+import { DRUGS, getDrugMeta } from './glp1';
 
+// Mobile keeps its own copy of the drug metadata (web has a sibling copy in
+// apps/web/lib/glp1.ts) — these tests pin the invariants the onboarding smart
+// defaults rely on.
 describe('getDrugMeta', () => {
   it('returns the matching metadata for a known drug', () => {
-    const meta = getDrugMeta('OZEMPIC');
-    expect(meta.label).toBe('Ozempic');
+    const meta = getDrugMeta('MOUNJARO');
+    expect(meta.label).toBe('Mounjaro');
     expect(meta.form).toBe('INJECTION');
     expect(meta.scheduleType).toBe('WEEKLY');
-    expect(meta.doses).toContain(0.25);
+    expect(meta.doses).toContain(2.5);
   });
 
   it('marks Rybelsus as an oral, daily medication', () => {
@@ -33,11 +36,9 @@ describe('getDrugMeta', () => {
   });
 });
 
-// The onboarding ladder is built from a drug's metadata via the shared
-// buildLadder — exercise the integration end-to-end for a real drug.
 describe('drug metadata + ladder integration', () => {
-  it('builds a Mounjaro ladder from current → goal', () => {
-    const meta = getDrugMeta('MOUNJARO');
-    expect(buildLadder(meta.doses, 2.5, 10)).toEqual([2.5, 5, 7.5, 10]);
+  it('builds a Wegovy ladder from current → goal', () => {
+    const meta = getDrugMeta('WEGOVY');
+    expect(buildLadder(meta.doses, 0.25, 1.7)).toEqual([0.25, 0.5, 1, 1.7]);
   });
 });

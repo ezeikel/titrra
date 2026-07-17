@@ -82,9 +82,9 @@ describe('isOverusingRegion', () => {
   });
 
   it('does not flag a spread-out rotation', () => {
-    expect(
-      isOverusingRegion(history(['ABDOMEN_L', 'THIGH_R', 'ARM_L'])),
-    ).toBe(false);
+    expect(isOverusingRegion(history(['ABDOMEN_L', 'THIGH_R', 'ARM_L']))).toBe(
+      false,
+    );
   });
 
   it('respects a custom window size', () => {
@@ -96,9 +96,9 @@ describe('isOverusingRegion', () => {
   it('ignores oral (null-site) doses when measuring overuse', () => {
     // Two abdomen injections with an oral dose interleaved still count the two
     // real injections — but that's only 2 real sites, under the window of 3.
-    expect(
-      isOverusingRegion(history(['ABDOMEN_L', null, 'ABDOMEN_R'])),
-    ).toBe(false);
+    expect(isOverusingRegion(history(['ABDOMEN_L', null, 'ABDOMEN_R']))).toBe(
+      false,
+    );
   });
 });
 

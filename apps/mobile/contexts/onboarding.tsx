@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { buildLadder } from '@titrra/types';
 import {
   createContext,
   type ReactNode,
@@ -14,7 +15,6 @@ import {
   type SideEffectType,
   type WeightUnit,
 } from '@/lib/api';
-import { buildLadder } from '@titrra/types';
 import { type BodyShape, setStoredBodyShape } from '@/lib/body-shape';
 import { getDrugMeta } from '@/lib/glp1';
 

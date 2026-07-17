@@ -1,5 +1,3 @@
-import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import * as AppleAuthentication from 'expo-apple-authentication';
 import {
   createContext,
   type ReactNode,
@@ -9,7 +7,6 @@ import {
   useState,
 } from 'react';
 import { Platform } from 'react-native';
-import { AccessToken, LoginManager } from 'react-native-fbsdk-next';
 import {
   registerDevice,
   sendMagicLink as sendMagicLinkApi,
@@ -58,6 +55,58 @@ const AuthContext = createContext<AuthContextValue>({
 
 export const useAuth = () => useContext(AuthContext);
 
+type NativeAuthModules = {
+  GoogleSignin: {
+    configure: (config: { webClientId?: string; iosClientId?: string }) => void;
+    hasPlayServices: () => Promise<void>;
+    signIn: () => Promise<{ data?: { idToken?: string | null } }>;
+    signOut: () => Promise<void>;
+  };
+  AppleAuthentication: {
+    AppleAuthenticationScope: { EMAIL: number; FULL_NAME: number };
+    signInAsync: (options: { requestedScopes: number[] }) => Promise<{
+      identityToken?: string | null;
+      fullName?: { givenName?: string | null; familyName?: string | null };
+    }>;
+  };
+  AccessToken: {
+    getCurrentAccessToken: () => Promise<{ accessToken?: string } | null>;
+  };
+  LoginManager: {
+    logInWithPermissions: (
+      permissions: string[],
+    ) => Promise<{ isCancelled: boolean }>;
+    logOut: () => void;
+  };
+};
+
+let cachedNativeAuth: NativeAuthModules | null | undefined;
+
+// These packages contain native components (fbsdk's FBLoginButton calls
+// requireNativeComponent at module scope, which react-native-web doesn't
+// provide). Metro may bundle the require calls for web, but never evaluates
+// them while static-rendering the Expo web build. That keeps the native app's
+// OAuth flows intact without making web export execute a
+// requireNativeComponent call. (Same fix as salt-mammal.)
+const getNativeAuth = (): NativeAuthModules | null => {
+  if (cachedNativeAuth !== undefined) return cachedNativeAuth;
+  if (Platform.OS === 'web') {
+    cachedNativeAuth = null;
+    return cachedNativeAuth;
+  }
+
+  const { GoogleSignin } = require('@react-native-google-signin/google-signin');
+  const AppleAuthentication = require('expo-apple-authentication');
+  const { AccessToken, LoginManager } = require('react-native-fbsdk-next');
+  cachedNativeAuth = {
+    GoogleSignin,
+    AppleAuthentication,
+    AccessToken,
+    LoginManager,
+  };
+  return cachedNativeAuth;
+};
+
 const isCancel = (err: unknown): boolean => {
   const msg =
     err && typeof err === 'object' && 'message' in err
@@ -81,8 +130,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Configure Google Sign-In once. webClientId is the audience the backend
   // verifies the idToken against; iosClientId drives the native iOS flow.
   useEffect(() => {
-    if (process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
-      GoogleSignin.configure({
+    const native = getNativeAuth();
+    if (native && process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID) {
+      native.GoogleSignin.configure({
         webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID,
         iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
       });
@@ -128,9 +178,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const signInWithGoogle = useCallback(async (): Promise<SignInResult> => {
+    const native = getNativeAuth();
+    if (!native) {
+      return { ok: false, cancelled: false, error: 'native auth unavailable' };
+    }
     try {
-      await GoogleSignin.hasPlayServices();
-      const info = await GoogleSignin.signIn();
+      await native.GoogleSignin.hasPlayServices();
+      const info = await native.GoogleSignin.signIn();
       const idToken = info.data?.idToken;
       if (!idToken)
         return { ok: false, cancelled: false, error: 'no id token' };
@@ -143,11 +197,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [applyAuth]);
 
   const signInWithApple = useCallback(async (): Promise<SignInResult> => {
+    const native = getNativeAuth();
+    if (!native) {
+      return { ok: false, cancelled: false, error: 'native auth unavailable' };
+    }
     try {
-      const cred = await AppleAuthentication.signInAsync({
+      const cred = await native.AppleAuthentication.signInAsync({
         requestedScopes: [
-          AppleAuthentication.AppleAuthenticationScope.EMAIL,
-          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          native.AppleAuthentication.AppleAuthenticationScope.EMAIL,
+          native.AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
         ],
       });
       if (!cred.identityToken) {
@@ -173,13 +231,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [applyAuth]);
 
   const signInWithFacebook = useCallback(async (): Promise<SignInResult> => {
+    const native = getNativeAuth();
+    if (!native) {
+      return { ok: false, cancelled: false, error: 'native auth unavailable' };
+    }
     try {
-      const result = await LoginManager.logInWithPermissions([
+      const result = await native.LoginManager.logInWithPermissions([
         'public_profile',
         'email',
       ]);
       if (result.isCancelled) return { ok: false, cancelled: true };
-      const token = await AccessToken.getCurrentAccessToken();
+      const token = await native.AccessToken.getCurrentAccessToken();
       if (!token?.accessToken) {
         return { ok: false, cancelled: false, error: 'no access token' };
       }
@@ -209,13 +271,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 
   const signOut = useCallback(async () => {
+    const native = getNativeAuth();
     try {
-      await GoogleSignin.signOut();
+      await native?.GoogleSignin.signOut();
     } catch {
       // not signed in with Google — ignore
     }
     try {
-      LoginManager.logOut();
+      native?.LoginManager.logOut();
     } catch {
       // fbsdk may not be initialised — ignore
     }

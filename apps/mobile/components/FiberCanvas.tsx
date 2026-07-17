@@ -67,10 +67,7 @@ export const FiberCanvas = forwardRef<FiberCanvasHandle, FiberCanvasProps>(
           if (!scene || !camera) return null;
           const { width: w, height: h } = sizeRef.current;
           // Logical px (top-left origin) → normalized device coords [-1, 1].
-          const ndc = new THREE.Vector2(
-            (x / w) * 2 - 1,
-            -((y / h) * 2 - 1),
-          );
+          const ndc = new THREE.Vector2((x / w) * 2 - 1, -((y / h) * 2 - 1));
           raycaster.setFromCamera(ndc, camera);
           const hits = raycaster.intersectObjects(scene.children, true);
           return hits.length ? hits[0].object : null;

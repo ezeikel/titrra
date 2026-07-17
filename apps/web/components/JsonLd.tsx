@@ -7,7 +7,6 @@ type JsonLdProps = {
 const JsonLd = ({ data }: JsonLdProps) => (
   <script
     type="application/ld+json"
-    // biome-ignore lint/security/noDangerouslySetInnerHtml: static JSON-LD
     dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
   />
 );

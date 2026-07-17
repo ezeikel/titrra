@@ -1,7 +1,7 @@
 'use client';
 
-import { Canvas, useFrame } from '@react-three/fiber';
 import { OrbitControls } from '@react-three/drei';
+import { Canvas, useFrame } from '@react-three/fiber';
 import {
   INJECTION_SITES,
   type InjectionSite,
@@ -10,12 +10,8 @@ import {
 } from '@titrra/types';
 import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
-import {
-  type BodyShape,
-  bodyModelFor,
-  type Landmarks,
-} from '@/lib/body-shape';
 import { HumanModel } from '@/components/bodymap/HumanModel';
+import { type BodyShape, bodyModelFor, type Landmarks } from '@/lib/body-shape';
 
 type BodyMap3DProps = {
   selected: InjectionSite;

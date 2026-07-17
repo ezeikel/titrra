@@ -5,11 +5,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import * as THREE from 'three/webgpu';
 import { FiberCanvas, type FiberCanvasHandle } from '@/components/FiberCanvas';
 import { HumanModel } from '@/components/HumanModel';
-import {
-  type BodyModel,
-  type BodyShape,
-  bodyModelFor,
-} from '@/lib/body-shape';
+import { type BodyModel, type BodyShape, bodyModelFor } from '@/lib/body-shape';
 import {
   INJECTION_SITES,
   type InjectionSite,
@@ -240,10 +236,7 @@ export const BodyMap3D = ({
           drawing buffer). Background is TRANSPARENT — the canvas blends into the
           surrounding card. */}
       <GestureDetector gesture={gesture}>
-        <View
-          collapsable={false}
-          style={{ width: canvasW, height: canvasH }}
-        >
+        <View collapsable={false} style={{ width: canvasW, height: canvasH }}>
           <FiberCanvas
             ref={canvasRef}
             width={canvasW}

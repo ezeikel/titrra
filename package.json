@@ -28,17 +28,20 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.16",
+    "@biomejs/biome": "2.5.4",
     "husky": "^9.1.7",
-    "lint-staged": "^16.0.0",
-    "turbo": "^2.5.6",
-    "typescript": "^5.7.3"
+    "lint-staged": "^16.4.0",
+    "turbo": "^2.10.5",
+    "typescript": "~6.0.3"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
+      "@prisma/engines",
       "@sentry/cli",
       "@shopify/react-native-skia",
       "core-js",
+      "esbuild",
+      "prisma",
       "sharp",
       "unrs-resolver"
     ],

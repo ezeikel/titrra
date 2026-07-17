@@ -9,7 +9,6 @@ import { ProBadge } from '@/components/ProBadge';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { Stepper } from '@/components/Stepper';
 import { trackEvent } from '@/lib/analytics';
-import { useBodyShape } from '@/lib/body-shape';
 import {
   type DoseRecord,
   type Drug,
@@ -18,6 +17,7 @@ import {
   listSteps,
   logDose as logDoseApi,
 } from '@/lib/api';
+import { useBodyShape } from '@/lib/body-shape';
 import { elevation } from '@/lib/elevation';
 import { getDrugMeta } from '@/lib/glp1';
 import {

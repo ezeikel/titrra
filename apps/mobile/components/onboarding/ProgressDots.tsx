@@ -32,7 +32,6 @@ export const ProgressDots = ({
   <View className="flex-row items-center gap-1.5">
     {Array.from({ length: total }).map((_, i) => (
       <Dot
-        // biome-ignore lint/suspicious/noArrayIndexKey: fixed-length static dots
         key={i}
         index={i}
         activeIndex={activeIndex}

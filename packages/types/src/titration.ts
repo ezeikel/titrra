@@ -13,9 +13,7 @@ export const buildLadder = (
   goalDose?: number | null,
 ): number[] => {
   const rungs = doses.filter((mg) =>
-    goalDose != null
-      ? mg >= currentDose && mg <= goalDose
-      : mg >= currentDose,
+    goalDose != null ? mg >= currentDose && mg <= goalDose : mg >= currentDose,
   );
   return rungs.includes(currentDose)
     ? rungs

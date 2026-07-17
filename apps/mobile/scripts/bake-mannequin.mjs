@@ -20,7 +20,14 @@ const binChunkStart = 20 + jsonLen;
 const binLen = buf.readUInt32LE(binChunkStart);
 const bin = buf.subarray(binChunkStart + 8, binChunkStart + 8 + binLen);
 
-const compType = { 5120: Int8Array, 5121: Uint8Array, 5122: Int16Array, 5123: Uint16Array, 5125: Uint32Array, 5126: Float32Array };
+const compType = {
+  5120: Int8Array,
+  5121: Uint8Array,
+  5122: Int16Array,
+  5123: Uint16Array,
+  5125: Uint32Array,
+  5126: Float32Array,
+};
 const numComp = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
 
 function readAccessor(idx) {
@@ -31,7 +38,9 @@ function readAccessor(idx) {
   const offset = (bv.byteOffset || 0) + (a.byteOffset || 0);
   const packedStride = TA.BYTES_PER_ELEMENT * n;
   if (bv.byteStride && bv.byteStride !== packedStride) {
-    throw new Error(`accessor ${idx} is interleaved; unsupported byteStride ${bv.byteStride}`);
+    throw new Error(
+      `accessor ${idx} is interleaved; unsupported byteStride ${bv.byteStride}`,
+    );
   }
   return new TA(bin.buffer, bin.byteOffset + offset, a.count * n);
 }
@@ -49,54 +58,116 @@ const prim = mesh.primitives[0];
 const POS = readAccessor(prim.attributes.POSITION);
 const count = POS.length / 3;
 const out = new Float32Array(count * 3);
-const min = [Infinity,Infinity,Infinity], max = [-Infinity,-Infinity,-Infinity];
+const min = [Infinity, Infinity, Infinity],
+  max = [-Infinity, -Infinity, -Infinity];
 for (let i = 0; i < count; i++) {
-  const x = POS[i*3], y = POS[i*3+1], z = POS[i*3+2];
-  out[i*3]=x; out[i*3+1]=y; out[i*3+2]=z;
-  if(x<min[0])min[0]=x; if(y<min[1])min[1]=y; if(z<min[2])min[2]=z;
-  if(x>max[0])max[0]=x; if(y>max[1])max[1]=y; if(z>max[2])max[2]=z;
+  const x = POS[i * 3],
+    y = POS[i * 3 + 1],
+    z = POS[i * 3 + 2];
+  out[i * 3] = x;
+  out[i * 3 + 1] = y;
+  out[i * 3 + 2] = z;
+  if (x < min[0]) min[0] = x;
+  if (y < min[1]) min[1] = y;
+  if (z < min[2]) min[2] = z;
+  if (x > max[0]) max[0] = x;
+  if (y > max[1]) max[1] = y;
+  if (z > max[2]) max[2] = z;
 }
 // CENTER the geometry on the origin (so the app needs no centering logic) AND
 // scale to a target height of 1.8 — bake both into the vertices.
-const cx = (min[0]+max[0])/2, cy = (min[1]+max[1])/2, cz = (min[2]+max[2])/2;
+const cx = (min[0] + max[0]) / 2,
+  cy = (min[1] + max[1]) / 2,
+  cz = (min[2] + max[2]) / 2;
 const targetH = 1.8;
-const s = targetH / (max[1]-min[1] || 1);
-for (let i=0;i<count;i++){
-  out[i*3]   = (out[i*3]   - cx) * s;
-  out[i*3+1] = (out[i*3+1] - cy) * s;
-  out[i*3+2] = (out[i*3+2] - cz) * s;
+const s = targetH / (max[1] - min[1] || 1);
+for (let i = 0; i < count; i++) {
+  out[i * 3] = (out[i * 3] - cx) * s;
+  out[i * 3 + 1] = (out[i * 3 + 1] - cy) * s;
+  out[i * 3 + 2] = (out[i * 3 + 2] - cz) * s;
 }
 // recompute bounds post-transform
-min[0]=min[1]=min[2]=Infinity; max[0]=max[1]=max[2]=-Infinity;
-for(let i=0;i<count;i++){const x=out[i*3],y=out[i*3+1],z=out[i*3+2];
-  if(x<min[0])min[0]=x;if(y<min[1])min[1]=y;if(z<min[2])min[2]=z;
-  if(x>max[0])max[0]=x;if(y>max[1])max[1]=y;if(z>max[2])max[2]=z;}
-console.log('CENTERED+SCALED bbox min', min.map(v=>v.toFixed(2)), 'max', max.map(v=>v.toFixed(2)));
-console.log('size (w,h,d):', (max[0]-min[0]).toFixed(2), (max[1]-min[1]).toFixed(2), (max[2]-min[2]).toFixed(2));
+min[0] = min[1] = min[2] = Infinity;
+max[0] = max[1] = max[2] = -Infinity;
+for (let i = 0; i < count; i++) {
+  const x = out[i * 3],
+    y = out[i * 3 + 1],
+    z = out[i * 3 + 2];
+  if (x < min[0]) min[0] = x;
+  if (y < min[1]) min[1] = y;
+  if (z < min[2]) min[2] = z;
+  if (x > max[0]) max[0] = x;
+  if (y > max[1]) max[1] = y;
+  if (z > max[2]) max[2] = z;
+}
+console.log(
+  'CENTERED+SCALED bbox min',
+  min.map((v) => v.toFixed(2)),
+  'max',
+  max.map((v) => v.toFixed(2)),
+);
+console.log(
+  'size (w,h,d):',
+  (max[0] - min[0]).toFixed(2),
+  (max[1] - min[1]).toFixed(2),
+  (max[2] - min[2]).toFixed(2),
+);
 
 // ---- write a minimal static GLB (POSITION + indices, no skin/normals — three computes normals) ----
 const INDEX = prim.indices != null ? readAccessor(prim.indices) : null;
 // pack binary: positions (f32) then indices (u32)
 const posBytes = Buffer.from(out.buffer, out.byteOffset, out.byteLength);
 let idxArr = INDEX ? Uint32Array.from(INDEX) : null;
-const idxBytes = idxArr ? Buffer.from(idxArr.buffer, idxArr.byteOffset, idxArr.byteLength) : Buffer.alloc(0);
+const idxBytes = idxArr
+  ? Buffer.from(idxArr.buffer, idxArr.byteOffset, idxArr.byteLength)
+  : Buffer.alloc(0);
 // pad to 4
-const pad = (b) => b.length % 4 ? Buffer.concat([b, Buffer.alloc(4 - (b.length%4))]) : b;
-const posP = pad(posBytes); const idxP = pad(idxBytes);
+const pad = (b) =>
+  b.length % 4 ? Buffer.concat([b, Buffer.alloc(4 - (b.length % 4))]) : b;
+const posP = pad(posBytes);
+const idxP = pad(idxBytes);
 const binOut = Buffer.concat([posP, idxP]);
 
 const gltf = {
   asset: { version: '2.0', generator: 'titrra-static-mesh-extractor' },
   scenes: [{ nodes: [0] }],
   nodes: [{ mesh: 0 }],
-  meshes: [{ primitives: [{ attributes: { POSITION: 0 }, ...(idxArr?{indices:1}:{}), mode: 4 }] }],
+  meshes: [
+    {
+      primitives: [
+        {
+          attributes: { POSITION: 0 },
+          ...(idxArr ? { indices: 1 } : {}),
+          mode: 4,
+        },
+      ],
+    },
+  ],
   accessors: [
     { bufferView: 0, componentType: 5126, count, type: 'VEC3', min, max },
-    ...(idxArr ? [{ bufferView: 1, componentType: 5125, count: idxArr.length, type: 'SCALAR' }] : []),
+    ...(idxArr
+      ? [
+          {
+            bufferView: 1,
+            componentType: 5125,
+            count: idxArr.length,
+            type: 'SCALAR',
+          },
+        ]
+      : []),
   ],
   bufferViews: [
     { buffer: 0, byteOffset: 0, byteLength: posBytes.length, target: 34962 },
-    ...(idxArr ? [{ buffer: 0, byteOffset: posP.length, byteLength: idxBytes.length, target: 34963 }] : []),
+    ...(idxArr
+      ? [
+          {
+            buffer: 0,
+            byteOffset: posP.length,
+            byteLength: idxBytes.length,
+            target: 34963,
+          },
+        ]
+      : []),
   ],
   buffers: [{ byteLength: binOut.length }],
 };
@@ -113,8 +184,12 @@ header.write('glTF', 0, 'ascii');
 header.writeUInt32LE(2, 4);
 const total = 12 + 8 + jsonChunk.length + 8 + binOut.length;
 header.writeUInt32LE(total, 8);
-const jsonHdr = Buffer.alloc(8); jsonHdr.writeUInt32LE(jsonChunk.length,0); jsonHdr.writeUInt32LE(0x4E4F534A,4); // 'JSON'
-const binHdr = Buffer.alloc(8); binHdr.writeUInt32LE(binOut.length,0); binHdr.writeUInt32LE(0x004E4942,4); // 'BIN\0'
+const jsonHdr = Buffer.alloc(8);
+jsonHdr.writeUInt32LE(jsonChunk.length, 0);
+jsonHdr.writeUInt32LE(0x4e4f534a, 4); // 'JSON'
+const binHdr = Buffer.alloc(8);
+binHdr.writeUInt32LE(binOut.length, 0);
+binHdr.writeUInt32LE(0x004e4942, 4); // 'BIN\0'
 
 writeFileSync(OUT, Buffer.concat([header, jsonHdr, jsonChunk, binHdr, binOut]));
 console.log('wrote', OUT, total, 'bytes');
@@ -131,7 +206,9 @@ const frontPoint = (yFrac, xTarget, band = 0.04) => {
   const y = yAt(yFrac);
   let best = null;
   for (let i = 0; i < count; i++) {
-    const x = out[i * 3], vy = out[i * 3 + 1], z = out[i * 3 + 2];
+    const x = out[i * 3],
+      vy = out[i * 3 + 1],
+      z = out[i * 3 + 2];
     if (Math.abs(vy - y) > band) continue;
     if (Math.abs(x - xTarget) > 0.05) continue;
     if (!best || z > best.z) best = { x, y: vy, z };
@@ -143,14 +220,17 @@ const outerPoint = (yFrac, sign, band = 0.04) => {
   const y = yAt(yFrac);
   let best = null;
   for (let i = 0; i < count; i++) {
-    const x = out[i * 3], vy = out[i * 3 + 1], z = out[i * 3 + 2];
+    const x = out[i * 3],
+      vy = out[i * 3 + 1],
+      z = out[i * 3 + 2];
     if (Math.abs(vy - y) > band) continue;
     if (sign > 0 ? x < 0.15 : x > -0.15) continue;
     if (!best || (sign > 0 ? x > best.x : x < best.x)) best = { x, y: vy, z };
   }
   return best;
 };
-const r = (v, fb) => (v ? [+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)] : fb);
+const r = (v, fb) =>
+  v ? [+v.x.toFixed(3), +v.y.toFixed(3), +v.z.toFixed(3)] : fb;
 // Fractions: belly ~60%, upper thigh ~42%, upper arm/deltoid ~70% of height.
 const landmarks = {
   ABDOMEN_L: r(frontPoint(0.6, -0.09), [-0.05, 0.17, 0.12]),

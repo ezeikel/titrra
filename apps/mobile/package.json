@@ -41,8 +41,9 @@
     "check-types": "tsc --noEmit",
     "env:pull": "eas env:pull --environment development",
     "doctor": "npx react-doctor@latest",
-    "test": "echo \"no unit tests in apps/mobile yet\" && exit 0",
-    "test:e2e": "maestro test .maestro"
+    "test": "vitest run",
+    "test:e2e": "maestro test .maestro",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.5",
@@ -104,7 +105,8 @@
     "@types/three": "0.184.0",
     "postcss": "^8",
     "tailwindcss": "^4",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "vitest": "^4.1.10"
   },
   "expo": {
     "install": {

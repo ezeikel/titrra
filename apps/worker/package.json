@@ -14,21 +14,21 @@
     "test:watch": "vitest"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^3.0.64",
-    "@ai-sdk/openai": "^3.0.7",
-    "@hono/node-server": "^1.19.11",
-    "@sanity/client": "^7.3.0",
-    "@sentry/node": "^10.57.0",
+    "@ai-sdk/anthropic": "^3.0.97",
+    "@ai-sdk/openai": "^3.0.85",
+    "@hono/node-server": "^1.19.14",
+    "@sanity/client": "^7.23.2",
+    "@sentry/node": "^10.66.0",
     "@titrra/db": "workspace:*",
     "@titrra/storage": "workspace:*",
     "@titrra/types": "workspace:*",
-    "ai": "^6.0.27",
-    "hono": "^4.0.0",
-    "zod": "^3.25.0"
+    "ai": "^6.0.229",
+    "hono": "^4.12.30",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
-    "@types/node": "^24.13.1",
-    "tsx": "^4.0.0",
+    "@types/node": "^24.13.3",
+    "tsx": "^4.23.1",
     "typescript": "~6.0.3",
     "vitest": "^4.1.10"
   }

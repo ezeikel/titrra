@@ -14,7 +14,6 @@ import { buildMetadata } from '@/lib/seo/metadata';
 import { articleSchema, breadcrumbSchema } from '@/lib/seo/schema';
 import { siteUrl } from '@/lib/site';
 
-// biome-ignore lint/suspicious/noExplicitAny: Sanity documents are loosely typed
 type Post = any;
 
 // Cache Components requires generateStaticParams to return ≥1 entry. When

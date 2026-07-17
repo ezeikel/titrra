@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import { buildLadder } from '@titrra/types';
+import { describe, expect, it } from 'vitest';
 import { DRUGS, getDrugMeta } from '@/lib/glp1';
 
 describe('getDrugMeta', () => {

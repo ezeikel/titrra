@@ -35,9 +35,7 @@ test('today: adjust panel reveals the body map', async ({ page }) => {
   await page.goto('/');
 
   await page.getByRole('button', { name: /adjust dose or site/i }).click();
-  await expect(
-    page.getByText('Injection site', { exact: true }),
-  ).toBeVisible();
+  await expect(page.getByText('Injection site', { exact: true })).toBeVisible();
   // The body map renders its own label + hint under the canvas.
   await expect(page.getByText(/drag to rotate/i)).toBeVisible({
     timeout: 15_000,
@@ -49,9 +47,7 @@ test('settings: body-shape switch selects', async ({ page }) => {
   await seedOnboarded(page);
   await page.goto('/settings');
 
-  await expect(
-    page.getByRole('heading', { name: /^Settings$/ }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: /^Settings$/ })).toBeVisible();
 
   const fem = page.getByRole('button', { name: /^Fem$/ });
   await fem.click();

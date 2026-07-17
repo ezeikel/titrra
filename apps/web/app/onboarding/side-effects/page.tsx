@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { SideEffectType } from '@/lib/api';
 import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
+import type { SideEffectType } from '@/lib/api';
 
 const TOTAL = 8;
 
@@ -40,7 +40,9 @@ const SideEffectsStep = () => {
       subtitle="Tap any you've felt lately — we'll start tracking them so you can spot patterns. Optional."
       onSkip={next}
       canContinue
-      continueLabel={data.sideEffects.length > 0 ? 'Continue' : 'None right now'}
+      continueLabel={
+        data.sideEffects.length > 0 ? 'Continue' : 'None right now'
+      }
       onContinue={next}
     >
       <div className="flex flex-wrap gap-2">

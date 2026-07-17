@@ -55,11 +55,7 @@ const VALID_SIDE_EFFECTS = new Set<SideEffectType>([
   'OTHER',
 ]);
 
-const VALID_BODY_SHAPES = new Set<BodyShape>([
-  'MALE',
-  'FEMALE',
-  'UNSPECIFIED',
-]);
+const VALID_BODY_SHAPES = new Set<BodyShape>(['MALE', 'FEMALE', 'UNSPECIFIED']);
 
 type OnboardingBody = {
   medication?: { drug?: string; form?: string; scheduleType?: string };

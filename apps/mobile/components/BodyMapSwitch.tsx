@@ -33,8 +33,11 @@ class BodyMapErrorBoundary extends Component<
   render() {
     if (this.state.failed) {
       // BodyMap (2D) doesn't take bodyShape — drop it alongside children.
-      const { children: _children, bodyShape: _bodyShape, ...mapProps } =
-        this.props;
+      const {
+        children: _children,
+        bodyShape: _bodyShape,
+        ...mapProps
+      } = this.props;
       return <BodyMap {...mapProps} />;
     }
     return this.props.children;

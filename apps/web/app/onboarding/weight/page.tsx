@@ -1,9 +1,9 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
-import type { WeightUnit } from '@/lib/api';
 import { OnboardingStep } from '@/components/onboarding/OnboardingStep';
 import { useOnboarding } from '@/contexts/onboarding';
+import type { WeightUnit } from '@/lib/api';
 
 const TOTAL = 8;
 
@@ -49,7 +49,9 @@ const WeightStep = () => {
                 onClick={() => set({ weightUnit: u })}
                 aria-pressed={selected}
                 className={`px-5 py-4 text-[14px] font-bold ${
-                  selected ? 'bg-teal text-white' : 'bg-white text-muted-foreground'
+                  selected
+                    ? 'bg-teal text-white'
+                    : 'bg-white text-muted-foreground'
                 }`}
               >
                 {u.toLowerCase()}

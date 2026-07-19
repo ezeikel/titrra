@@ -1,0 +1,11 @@
+{
+  "kind": "androidpublisher#listingsListResponse",
+  "listings": [
+    {
+      "fullDescription": "Titrra is the focused tracker built for the GLP-1 routine itself \u2014 not calories.\n\nGeneric food apps focus on calories. Reminder apps focus on alarms. Titrra is built around your weight-loss shot: log each dose, rotate your injection sites, follow your titration ladder, and track side effects and weight \u2014 all in one calm, premium app.\n\nLOG EVERY DOSE\n\u2022 One-tap \u201clog this week's shot\u201d\n\u2022 Smart dose + injection-site suggestions so logging is a single tap\n\u2022 A rotating 3D body map that suggests the next site so you never overuse one area\n\nFOLLOW YOUR TITRATION LADDER\n\u2022 See exactly where you are on your dose-escalation plan (e.g. 2.5 \u2192 5 \u2192 7.5 \u2192 10 mg)\n\u2022 Gentle prompts when it's time to talk to your provider about stepping up\n\nTRACK WHAT MATTERS\n\u2022 Side effects (nausea, constipation, fatigue, reflux and more) with severity, so you can spot patterns\n\u2022 Weight trend over time with a simple, satisfying log\n\u2022 Built for low appetite on GLP-1 \u2014 focus on the routine, not the calorie count\n\nWORKS FOR YOUR MEDICATION\n\u2022 Ozempic, Wegovy, Mounjaro, Zepbound, Rybelsus, and compounded semaglutide / tirzepatide\n\u2022 Weekly injections or daily pills\n\nONE HONEST PRICE\n\u2022 No confusing tiers, no weekly traps, no 10-option maze\n\u2022 A single, fair plan \u2014 monthly, yearly, or lifetime\n\nFor tracking and education only. Not medical advice. Titrra never recommends a dose change \u2014 always talk to your healthcare provider.",
+      "language": "en-GB",
+      "shortDescription": "Track your weight-loss shot: doses, injection sites, titration, side effects.",
+      "title": "Titrra: GLP-1 & Shot Tracker"
+    }
+  ]
+}

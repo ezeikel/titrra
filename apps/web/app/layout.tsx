@@ -11,6 +11,7 @@ import {
   websiteSchema,
 } from '@/lib/seo/schema';
 import { SITE_URL } from '@/lib/site';
+import Providers from './providers';
 import './globals.css';
 
 // We import the Font Awesome core CSS ourselves (above) so Next bundles it; tell
@@ -90,7 +91,7 @@ export default function RootLayout({
         <JsonLd data={softwareApplicationSchema()} />
       </head>
       <body className="font-sans antialiased">
-        {children}
+        <Providers>{children}</Providers>
         <Toaster position="top-center" theme="light" />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>

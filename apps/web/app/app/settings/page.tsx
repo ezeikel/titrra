@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+import { signOut, useSession } from 'next-auth/react';
 import { ScreenScaffold } from '@/components/ScreenScaffold';
 import { trackEvent } from '@/lib/analytics';
 import { type BodyShape, useBodyShape } from '@/lib/body-shape';
@@ -14,6 +16,7 @@ const BODY_SHAPE_OPTIONS: { value: BodyShape; label: string }[] = [
 // Settings — body-shape preference + the anonymous-user reset. (Pro / units /
 // reminders land here when those web features ship.)
 const SettingsScreen = () => {
+  const { data: session } = useSession();
   const { bodyShape, setBodyShape } = useBodyShape();
 
   const clearAll = () => {
@@ -71,6 +74,39 @@ const SettingsScreen = () => {
             );
           })}
         </div>
+      </div>
+
+      {/* Account sync — optional; anonymous use never requires sign-in. */}
+      <div className="mt-6 rounded-3xl bg-white p-5 shadow-sm">
+        <p className="text-[12px] font-bold uppercase tracking-[2px] text-muted-foreground">
+          Account
+        </p>
+        {session?.user ? (
+          <>
+            <p className="mt-2 text-[14px] text-ink">
+              Signed in as {session.user.name || session.user.email}
+            </p>
+            <button
+              type="button"
+              onClick={() => signOut()}
+              className="mt-4 text-[14px] font-semibold text-muted-foreground hover:text-ink"
+            >
+              Sign out
+            </button>
+          </>
+        ) : (
+          <>
+            <p className="mt-2 text-[14px] text-muted-foreground">
+              Sign in to sync your tracking across devices and the web.
+            </p>
+            <Link
+              href="/signin?callbackUrl=/app/settings"
+              className="mt-4 inline-block text-[14px] font-semibold text-teal hover:underline"
+            >
+              Sign in to sync
+            </Link>
+          </>
+        )}
       </div>
 
       {/* Anonymous user reset */}

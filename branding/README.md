@@ -2,26 +2,30 @@
 
 > Fleet convention: `~/Development/docs/BRAND-STORE-ASSETS.md`.
 
-## Figma (canonical — one file)
+## Figma — **one file only**
 
 **[Titrra — Brand](https://www.figma.com/design/8F2KXoJOsDa3Rs7Oq7rsdc)**
 
-Pages: Logo Lockups · App Icons · Store Screenshots · Social.
+| Page | Contents |
+|---|---|
+| **Logo Lockups** | App icon + on-dark / white / mono marks; horizontal, stacked, wordmark |
+| **App Icons** | Production / Internal (purple+grid) / Dev (teal+code) 1024² |
+| **Store Screenshots** | (fill as needed) |
+| **Social** | (fill as needed) |
 
-Legacy (fold into Social, then archive):
-- [Facebook Cover](https://www.figma.com/design/1briKCk2wrcS68rvqTmia5)
+Legacy FB Cover: https://www.figma.com/design/1briKCk2wrcS68rvqTmia5 — fold then delete.
 
 ## App icon variants (Expo)
 
-| File | Env |
-|---|---|
-| `apps/mobile/assets/images/icon.png` | production |
-| `apps/mobile/assets/images/icon-preview.png` | preview → Internal (grid) |
-| `apps/mobile/assets/images/icon-dev.png` | development → Dev (code) |
+| File | Env | BG |
+|---|---|---|
+| `icon.png` | production | Brand store art |
+| `icon-preview.png` | preview → Internal | Purple `#5B2C6F` + light grid |
+| `icon-dev.png` | development → Dev | Teal `#0E6655` + large code |
 
-Also `adaptive-icon{,-preview,-dev}.png`. Regenerator:
+Wired via `pickIcon` in mobile `app.config.ts`. Regenerator:
 `~/Development/Personal/scripts/generate-app-icon-variants.sh`
 
-## Canonical assets
+## Repo exports
 
-Expo icons live in `apps/mobile/assets/images/`. Export lockups from Figma into this folder as the logo system is built out.
+`branding/lockups/` — mark tiles exported for Figma.

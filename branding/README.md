@@ -1,18 +1,27 @@
 # Titrra — Brand Assets
 
-> Fleet convention: `docs` repo → `BRAND-STORE-ASSETS.md`. Salt Mammal's
-> `branding/README.md` is the reference implementation.
+> Fleet convention: `~/Development/docs/BRAND-STORE-ASSETS.md`.
 
-## Figma (logo system)
+## Figma (canonical — one file)
 
-- **[Titrra — Facebook Cover](https://www.figma.com/design/1briKCk2wrcS68rvqTmia5)**
+**[Titrra — Brand](https://www.figma.com/design/8F2KXoJOsDa3Rs7Oq7rsdc)**
 
-TODO — create `Titrra — Brand` with the standard lockup set; fold the FB Cover in.
+Pages: Logo Lockups · App Icons · Store Screenshots · Social.
 
-Standard lockup set (masters + instances): `Logo / Mark / App Icon`, `Logo / Mark`
-(transparent light/dark variants), `Logo / Wordmark`, `Logo / Horizontal`, `Logo / Stacked`.
-Edit via Figma MCP; export canonical SVG/PNG into this folder and list them below.
+Legacy (fold into Social, then archive):
+- [Facebook Cover](https://www.figma.com/design/1briKCk2wrcS68rvqTmia5)
+
+## App icon variants (Expo)
+
+| File | Env |
+|---|---|
+| `apps/mobile/assets/images/icon.png` | production |
+| `apps/mobile/assets/images/icon-preview.png` | preview → Internal (grid) |
+| `apps/mobile/assets/images/icon-dev.png` | development → Dev (code) |
+
+Also `adaptive-icon{,-preview,-dev}.png`. Regenerator:
+`~/Development/Personal/scripts/generate-app-icon-variants.sh`
 
 ## Canonical assets
 
-None exported yet — current icon/splash sources live in `apps/mobile/assets/` (Expo).
+Expo icons live in `apps/mobile/assets/images/`. Export lockups from Figma into this folder as the logo system is built out.

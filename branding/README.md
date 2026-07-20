@@ -11,9 +11,17 @@
 | **Logo Lockups** | App icon + on-dark / white / mono marks; horizontal, stacked, wordmark |
 | **App Icons** | Production / Internal (purple+grid) / Dev (teal+code) 1024² |
 | **Store Screenshots** | (fill as needed) |
-| **Social** | (fill as needed) |
+| **Social** | FB Cover 1640×664 · OG Card 1200×630 — **IMAGE-verified** |
 
-Legacy FB Cover: https://www.figma.com/design/1briKCk2wrcS68rvqTmia5 — fold then delete.
+Repo exports under `branding/social/` (`facebook-cover-1640x664.png`, `og-card.png`).
+
+### Legacy (fold complete — safe to archive/delete in Figma UI)
+
+| Old file | Now in Brand |
+|---|---|
+| [Titrra — Facebook Cover](https://www.figma.com/design/1briKCk2wrcS68rvqTmia5) | **Social** page |
+
+Social fold = export/upload with **IMAGE** fills verified. Empty frames or solid placeholders do **not** count.
 
 ## App icon variants (Expo)
 

@@ -37,6 +37,7 @@
     "eas:update:production": "eas update --channel production --environment production",
     "eas:release:ios": "eas build --profile production --platform ios --auto-submit",
     "eas:release:android": "eas build --profile production --platform android --auto-submit",
+    "release": "node scripts/release.mjs",
     "eas:submit:production": "eas submit --profile production",
     "check-types": "tsc --noEmit",
     "env:pull": "eas env:pull --environment development",
